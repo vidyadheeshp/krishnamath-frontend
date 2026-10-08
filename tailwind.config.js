@@ -3,22 +3,26 @@ export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       colors: {
-        sandal: '#f3e8d0',
-        terracotta: '#ad4c34',
-        marigold: '#f2b84b',
-        teak: '#5d4030',
-        moss: '#4f6f52',
-        ink: '#211911',
+        // Legacy token names are kept so existing pages pick up the new palette.
+        ink: '#0f172a',
+        teak: '#475569',
+        sandal: '#e2e8f0',
+        terracotta: '#dc2626',
+        moss: '#059669',
+        marigold: '#f59e0b',
+        surface: '#f6f7fb',
+        brand: {
+          DEFAULT: '#4f46e5',
+          dark: '#4338ca',
+          soft: '#eef2ff',
+        },
       },
       boxShadow: {
-        card: '0 24px 60px rgba(88, 52, 29, 0.14)',
-      },
-      borderRadius: {
-        xl2: '1.5rem',
-      },
-      backgroundImage: {
-        halo: 'radial-gradient(circle at top, rgba(242, 184, 75, 0.45), transparent 32%)',
+        card: '0 1px 2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(15, 23, 42, 0.06)',
       },
     },
   },

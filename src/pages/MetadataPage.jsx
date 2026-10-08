@@ -16,14 +16,11 @@ const metadataTypes = [
   { value: 'sevaCategories', labelKey: 'metadata.sevaCategories' },
 ];
 
-const PAGE_SIZE = 10;
-
 export default function MetadataPage() {
   const [selectedType, setSelectedType] = useState(metadataTypes[0].value);
   const [items, setItems] = useState([]);
   const [name, setName] = useState('');
   const [nameKn, setNameKn] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState('');
   const [editingNameKn, setEditingNameKn] = useState('');
@@ -37,7 +34,6 @@ export default function MetadataPage() {
     try {
       const response = await api.get(`/metadata/${type}`);
       setItems(response.data.data);
-      setCurrentPage(1);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to load metadata');
     }
@@ -114,7 +110,13 @@ export default function MetadataPage() {
             </div>
           ) : localeName(row, lang),
       },
-      { key: 'enabled', header: t('metadata.status'), render: (value) => (value ? t('metadata.enabled') : t('metadata.disabled')) },
+      {
+        key: 'enabled',
+        header: t('metadata.status'),
+        render: (value) => (value ? t('metadata.enabled') : t('metadata.disabled')),
+        searchValue: (row) => (row.enabled ? t('metadata.enabled') : t('metadata.disabled')),
+        sortValue: (row) => (row.enabled ? 0 : 1),
+      },
       {
         key: 'id',
         header: 'Actions',
@@ -124,7 +126,7 @@ export default function MetadataPage() {
               <button
                 type="button"
                 onClick={() => handleSaveEdit(row)}
-                className="rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white"
+                className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white"
               >
                 Save
               </button>
@@ -160,16 +162,8 @@ export default function MetadataPage() {
     [editingId, editingName, editingNameKn, lang, t],
   );
 
-  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-
-  const paginatedRows = useMemo(
-    () =>
-      items.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE).map((item, index) => ({
-        ...item,
-        slNo: (currentPage - 1) * PAGE_SIZE + index + 1,
-      })),
-    [items, currentPage],
-  );
+  // Search, sort and paging are handled by the table; the Kannada name is searchable too.
+  const tableRows = useMemo(() => items.map((item) => ({ ...item, _search: item.nameKn })), [items]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -199,8 +193,8 @@ export default function MetadataPage() {
       <section className="grid gap-6 xl:grid-cols-[280px_1fr]">
         {/* Left: type selector buttons + add form */}
         <div className="space-y-4">
-          <div className="rounded-[1.75rem] border border-white/70 bg-white p-4 shadow-card">
-            <p className="px-2 pb-3 text-xs font-semibold uppercase tracking-[0.2em] text-teak/60">Categories</p>
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-card">
+            <p className="px-2 pb-3 text-xs font-semibold uppercase tracking-wide text-teak/60">Categories</p>
             <div className="flex flex-col gap-1">
               {metadataTypes.map((type) => (
                 <button
@@ -209,7 +203,7 @@ export default function MetadataPage() {
                   onClick={() => setSelectedType(type.value)}
                   className={`rounded-xl px-4 py-2.5 text-left text-sm font-semibold transition ${
                     selectedType === type.value
-                      ? 'bg-terracotta text-white'
+                      ? 'bg-brand text-white'
                       : 'text-teak hover:bg-sandal/40'
                   }`}
                 >
@@ -219,14 +213,14 @@ export default function MetadataPage() {
             </div>
           </div>
 
-          <form className="rounded-[1.75rem] border border-white/70 bg-white p-5 shadow-card" onSubmit={handleSubmit}>
-            <h2 className="font-serif text-xl text-ink">{t('common.add')} {selectedLabel}</h2>
+          <form className="rounded-xl border border-slate-200 bg-white p-5 shadow-card" onSubmit={handleSubmit}>
+            <h2 className="text-base font-semibold text-ink">{t('common.add')} {selectedLabel}</h2>
             <label className="mt-4 block text-sm font-semibold text-teak">
               {t('metadata.name')}
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-sandal px-4 py-3"
+                className="mt-2 w-full rounded-lg border border-sandal px-4 py-3"
                 placeholder={t('metadata.enterName')}
               />
             </label>
@@ -235,54 +229,24 @@ export default function MetadataPage() {
               <input
                 value={nameKn}
                 onChange={(event) => setNameKn(event.target.value)}
-                className="mt-2 w-full rounded-2xl border border-sandal px-4 py-3"
+                className="mt-2 w-full rounded-lg border border-sandal px-4 py-3"
                 placeholder="ಕನ್ನಡ ಹೆಸರು"
               />
             </label>
-            <button type="submit" className="mt-4 w-full rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white">
+            <button type="submit" className="mt-4 w-full rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white">
               {t('common.save')}
             </button>
           </form>
         </div>
 
         {/* Right: table + pagination */}
-        <div className="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
           <div className="mb-5">
-            <h2 className="font-serif text-2xl text-ink">{selectedLabel}</h2>
-            <p className="mt-1 text-sm text-teak/80">{t('metadata.itemsCount', { from: items.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1, to: Math.min(currentPage * PAGE_SIZE, items.length), total: items.length })}</p>
+            <h2 className="text-lg font-semibold text-ink">{selectedLabel}</h2>
+            <p className="mt-1 text-sm text-slate-500">{items.length} {t('receipts.entries')}</p>
           </div>
 
-          <DataTable columns={columns} rows={paginatedRows} emptyText={t('metadata.noItems')} />
-
-          <div className="mt-5 flex flex-col gap-3 border-t border-stone-100 pt-5 text-sm text-teak/80 sm:flex-row sm:items-center sm:justify-between">
-            <p>
-              {t('common.showing')}{' '}
-              {items.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
-              {' '}{t('common.to')}{' '}
-              {Math.min(currentPage * PAGE_SIZE, items.length)} {t('common.of')} {items.length}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="rounded-xl border border-sandal px-4 py-2 font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {t('common.prev')}
-              </button>
-              <span className="min-w-[88px] text-center font-semibold text-ink">
-                {t('common.page')} {currentPage} {t('common.of')} {totalPages}
-              </span>
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="rounded-xl border border-sandal px-4 py-2 font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {t('common.next')}
-              </button>
-            </div>
-          </div>
+          <DataTable key={selectedType} columns={columns} rows={tableRows} emptyText={t('metadata.noItems')} />
         </div>
       </section>
     </div>

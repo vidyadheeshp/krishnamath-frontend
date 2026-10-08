@@ -7,16 +7,13 @@ import DataTable from '../components/DataTable';
 import PageHeader from '../components/PageHeader';
 import { formatCurrency, localeName } from '../utils/format';
 
-const pageSize = 10;
 
 const initialForm = {
   name: '',
   nameKn: '',
   description: '',
   amount: 250,
-  duration: 30,
   category: 'Daily',
-  maxBookingsPerDay: 10,
   instructions: '',
   availabilityStatus: 'active',
 };
@@ -25,8 +22,6 @@ export default function SevasPage() {
   const [sevas, setSevas] = useState([]);
   const [sevaCategories, setSevaCategories] = useState([]);
   const [form, setForm] = useState(initialForm);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const { t, i18n: i18nInst } = useTranslation();
@@ -43,14 +38,10 @@ export default function SevasPage() {
 
   useEffect(() => {
     loadSevas();
-    api.get('/metadata/seva-categories')
+    api.get('/metadata/sevaCategories')
       .then((res) => setSevaCategories(res.data.data.filter((c) => c.enabled)))
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
 
   const handleOpenEdit = (seva) => {
     setForm({
@@ -58,9 +49,7 @@ export default function SevasPage() {
       nameKn: seva.nameKn ?? '',
       description: seva.description ?? '',
       amount: seva.amount ?? 250,
-      duration: seva.duration ?? 30,
       category: seva.category ?? 'Daily',
-      maxBookingsPerDay: seva.maxBookingsPerDay ?? 10,
       instructions: seva.instructions ?? '',
       availabilityStatus: seva.availabilityStatus ?? 'active',
     });
@@ -85,8 +74,6 @@ export default function SevasPage() {
       { key: 'name', header: t('sevas.sevaName'), render: (_value, row) => localeName(row, lang) },
       { key: 'category', header: t('common.category') },
       { key: 'amount', header: t('common.amount'), render: (value) => formatCurrency(value) },
-      { key: 'duration', header: t('sevas.duration'), render: (value) => `${value} min` },
-      { key: 'maxBookingsPerDay', header: t('sevas.dailyCap') },
       {
         key: 'id',
         header: t('common.actions'),
@@ -114,32 +101,14 @@ export default function SevasPage() {
     [t, lang],
   );
 
-  const filteredSevas = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-    return sevas.filter(
-      (seva) =>
-        seva.availabilityStatus === 'active' &&
-        (!normalizedSearch ||
-          [seva.name, seva.description, seva.category, seva.instructions].some((value) =>
-            String(value || '').toLowerCase().includes(normalizedSearch),
-          )),
-    );
-  }, [searchTerm, sevas]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredSevas.length / pageSize));
-  const paginatedSevas = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return filteredSevas.slice(startIndex, startIndex + pageSize).map((seva, index) => ({
-      ...seva,
-      slNo: startIndex + index + 1,
-    }));
-  }, [currentPage, filteredSevas]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
+  // Only active sevas are listed; the table searches the description and instructions too.
+  const tableRows = useMemo(
+    () =>
+      sevas
+        .filter((seva) => seva.availabilityStatus === 'active')
+        .map((seva) => ({ ...seva, _search: [seva.nameKn, seva.description, seva.instructions].filter(Boolean).join(' ') })),
+    [sevas],
+  );
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -187,73 +156,33 @@ export default function SevasPage() {
           <button
             type="button"
             onClick={handleOpenModal}
-            className="rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:bg-teak"
+            className="rounded-lg bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark"
           >
             {t('sevas.addNewSeva')}
           </button>
         }
       />
-      <section className="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
+      <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h2 className="font-serif text-2xl text-ink">{t('sevas.catalog')}</h2>
+            <h2 className="text-lg font-semibold text-ink">{t('sevas.catalog')}</h2>
             <p className="mt-2 text-sm text-teak/80">
               {t('sevas.catalogSubtitle')}
             </p>
           </div>
-          <label className="block text-sm font-semibold text-teak lg:w-[320px]">
-            {t('common.search')}
-            <input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder={t('sevas.searchPlaceholder')}
-              className="mt-2 w-full rounded-2xl border border-sandal px-4 py-3"
-            />
-          </label>
         </div>
 
         <div className="mt-6">
-          <DataTable columns={columns} rows={paginatedSevas} emptyText={t('sevas.emptyText')} />
-        </div>
-
-        <div className="mt-5 flex flex-col gap-3 border-t border-stone-100 pt-5 text-sm text-teak/80 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            {t('sevas.sevasCount', {
-              from: filteredSevas.length === 0 ? 0 : (currentPage - 1) * pageSize + 1,
-              to: Math.min(currentPage * pageSize, filteredSevas.length),
-              total: filteredSevas.length,
-            })}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-              disabled={currentPage === 1}
-              className="rounded-xl border border-sandal px-4 py-2 font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {t('common.prev')}
-            </button>
-            <span className="min-w-[88px] text-center font-semibold text-ink">
-              {t('common.page')} {currentPage} {t('common.of')} {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded-xl border border-sandal px-4 py-2 font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {t('common.next')}
-            </button>
-          </div>
+          <DataTable columns={columns} rows={tableRows} emptyText={t('sevas.emptyText')} searchPlaceholder={t('sevas.searchPlaceholder')} />
         </div>
       </section>
 
       {isModalOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/45 px-4 py-6">
-          <div className="w-full max-w-lg rounded-[1.75rem] border border-white/70 bg-white p-5 shadow-card">
+          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-5 shadow-card">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="font-serif text-xl text-ink">{editingId ? t('sevas.editSeva') : t('sevas.addNewSeva')}</h2>
+                <h2 className="text-base font-semibold text-ink">{editingId ? t('sevas.editSeva') : t('sevas.addNewSeva')}</h2>
                 <p className="mt-1 text-xs text-teak/80">{editingId ? t('sevas.editDesc') : t('sevas.addDesc')}</p>
               </div>
               <button
@@ -279,7 +208,7 @@ export default function SevasPage() {
                       name={name}
                       value={form[name]}
                       onChange={handleChange}
-                      className="mt-1.5 w-full rounded-2xl border border-sandal px-3 py-2.5 text-sm"
+                      className="mt-1.5 w-full rounded-lg border border-sandal px-3 py-2.5 text-sm"
                     />
                   </label>
                 ))}
@@ -289,7 +218,7 @@ export default function SevasPage() {
                     name="category"
                     value={form.category}
                     onChange={handleChange}
-                    className="mt-1.5 w-full rounded-2xl border border-sandal px-3 py-2.5 text-sm"
+                    className="mt-1.5 w-full rounded-lg border border-sandal px-3 py-2.5 text-sm"
                   >
                     {sevaCategories.length === 0 && (
                       <option value={form.category}>{form.category}</option>
@@ -299,11 +228,7 @@ export default function SevasPage() {
                     ))}
                   </select>
                 </label>
-                {[
-                  ['amount', t('common.amount')],
-                  ['duration', t('sevas.minutes')],
-                  ['maxBookingsPerDay', t('sevas.capacity')],
-                ].map(([name, label]) => (
+                {[['amount', t('common.amount')]].map(([name, label]) => (
                   <label key={name} className="block text-sm font-semibold text-teak">
                     {label}
                     <input
@@ -311,7 +236,7 @@ export default function SevasPage() {
                       type="number"
                       value={form[name]}
                       onChange={handleChange}
-                      className="mt-1.5 w-full rounded-2xl border border-sandal px-3 py-2.5 text-sm"
+                      className="mt-1.5 w-full rounded-lg border border-sandal px-3 py-2.5 text-sm"
                     />
                   </label>
                 ))}
@@ -321,7 +246,7 @@ export default function SevasPage() {
                     name="availabilityStatus"
                     value={form.availabilityStatus}
                     onChange={handleChange}
-                    className="mt-1.5 w-full rounded-2xl border border-sandal px-3 py-2.5 text-sm"
+                    className="mt-1.5 w-full rounded-lg border border-sandal px-3 py-2.5 text-sm"
                   >
                     <option value="active">{t('sevas.active')}</option>
                     <option value="inactive">{t('sevas.inactive')}</option>
@@ -333,11 +258,11 @@ export default function SevasPage() {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="rounded-2xl border border-sandal px-4 py-3 text-sm font-semibold text-ink"
+                  className="rounded-lg border border-sandal px-4 py-3 text-sm font-semibold text-ink"
                 >
                   {t('common.cancel')}
                 </button>
-                <button type="submit" className="rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white">
+                <button type="submit" className="rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white">
                   {editingId ? t('sevas.updateSeva') : t('sevas.createSeva')}
                 </button>
               </div>

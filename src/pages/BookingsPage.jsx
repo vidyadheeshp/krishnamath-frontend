@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Ban } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -9,21 +10,23 @@ import BookingCalendar from '../components/BookingCalendar';
 import DataTable from '../components/DataTable';
 import PageHeader from '../components/PageHeader';
 import StatusBadge from '../components/StatusBadge';
+import UpiQrCode from '../components/UpiQrCode';
 import { formatCurrency, formatDate, localeName } from '../utils/format';
-import { generateReceipt } from '../utils/generateReceipt';
+import { openReceipt } from '../utils/generateReceipt';
 import { bookingSchema } from '../validations/authSchemas';
-
-const PAGE_SIZE = 10;
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [sevas, setSevas] = useState([]);
   const [metadata, setMetadata] = useState({ gotras: [], nakshatras: [], raashis: [], paymentModes: [] });
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isUpiModalOpen, setIsUpiModalOpen] = useState(false);
   const [detailBooking, setDetailBooking] = useState(null);
-  const [dayBookings, setDayBookings] = useState(null);
-  const [selectedDay, setSelectedDay] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [blockedDates, setBlockedDates] = useState({});
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');
   const [isMultiSeva, setIsMultiSeva] = useState(false);
   const { t, i18n: i18nInst } = useTranslation();
   const lang = i18nInst.language;
@@ -45,10 +48,9 @@ export default function BookingsPage() {
       sevaId: '',
       sevaIds: [],
       bookingDate: new Date().toISOString().slice(0, 10),
-      bookingTime: '09:00',
       paymentMode: 'Cash',
       amountPayable: 250,
-      discount: 0,
+      donation: 0,
       address: '',
       gotra: '',
       nakshatra: '',
@@ -61,6 +63,12 @@ export default function BookingsPage() {
   const selectedSevaId = watch('sevaId');
   const selectedSevaIds = watch('sevaIds') || [];
   const devoteeNameInput = watch('devoteeName');
+  const selectedPaymentMode = watch('paymentMode');
+  const amountPayableInput = watch('amountPayable');
+  const donationInput = watch('donation');
+  const bookingDateInput = watch('bookingDate');
+  const totalToCollect = (Number(amountPayableInput) || 0) + (Number(donationInput) || 0);
+  const isUpiPayment = String(selectedPaymentMode || '').trim().toLowerCase() === 'upi';
 
   const getBookingSevas = (booking) => (Array.isArray(booking?.sevas) && booking.sevas.length > 0 ? booking.sevas : booking?.seva ? [booking.seva] : []);
 
@@ -133,6 +141,14 @@ export default function BookingsPage() {
     loadData();
   }, []);
 
+  // Dates on which bookings are closed (Ekadashi etc.), shown on the calendar and refused on click.
+  useEffect(() => {
+    api
+      .get('/blocked-dates')
+      .then((response) => setBlockedDates(Object.fromEntries(response.data.data.map((item) => [item.date, item.reason]))))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (isMultiSeva) {
       const total = sevas
@@ -200,10 +216,45 @@ export default function BookingsPage() {
     }
   };
 
-  const handleOpenCreate = () => {
+  const handleOpenCreate = (dateStr) => {
     reset();
+    setValue('bookingDate', dateStr);
     setIsMultiSeva(false);
+    setIsUpiModalOpen(false);
     setIsCreateOpen(true);
+  };
+
+  const handleUpiPaymentComplete = () => {
+    // Close the QR modal and return to the booking form so the reference
+    // number can be recorded before the booking is saved.
+    setIsUpiModalOpen(false);
+    setTimeout(() => setFocus('paymentReferenceNumber'), 0);
+  };
+
+  const openCancel = (booking) => {
+    setCancelReason('');
+    setCancelTarget(booking);
+  };
+
+  const closeCancel = () => {
+    if (!cancelling) setCancelTarget(null);
+  };
+
+  const handleConfirmCancel = async (event) => {
+    event.preventDefault();
+    setCancelling(true);
+
+    try {
+      await api.post(`/bookings/${cancelTarget.id}/cancel`, { reason: cancelReason.trim() });
+      toast.success(t('bookings.cancelledToast'));
+      setCancelTarget(null);
+      setDetailBooking(null);
+      loadData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || t('bookings.cancelFailed'));
+    } finally {
+      setCancelling(false);
+    }
   };
 
   const handleEventClick = (bookingId) => {
@@ -211,10 +262,17 @@ export default function BookingsPage() {
     if (found) setDetailBooking(found);
   };
 
+  // Clicking a date on the calendar opens the booking form with that date locked in.
   const handleDateClick = (dateStr) => {
-    const matched = bookings.filter((b) => b.bookingDate === dateStr && b.status !== 'cancelled');
-    setSelectedDay(dateStr);
-    setDayBookings(matched);
+    const date = dateStr.slice(0, 10); // the week view reports date and time
+    const reason = blockedDates[date];
+
+    if (reason !== undefined) {
+      toast.error(t('bookings.dateBlocked', { date: formatDate(date), reason: reason || t('blockedDates.blocked') }));
+      return;
+    }
+
+    handleOpenCreate(date);
   };
 
   const columns = useMemo(
@@ -239,11 +297,30 @@ export default function BookingsPage() {
             </button>
             <button
               type="button"
-              onClick={() => generateReceipt(booking)}
+              onClick={() => openReceipt(booking)}
               className="rounded-lg bg-terracotta/10 px-3 py-1.5 text-xs font-semibold text-terracotta hover:bg-terracotta/20"
             >
-              {t('common.downloadPDF')}
+              {t('common.viewReceipt')}
             </button>
+            {booking.cancellable ? (
+              <button
+                type="button"
+                onClick={() => openCancel(booking)}
+                className="inline-flex items-center gap-1 rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+              >
+                <Ban className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('bookings.cancelBooking')}
+              </button>
+            ) : booking.status !== 'cancelled' ? (
+              // The seva date has passed: the booking is frozen.
+              <span
+                className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-400"
+                title={t('bookings.cancelClosedHint', { date: formatDate(booking.bookingDate) })}
+              >
+                <Ban className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('bookings.cancelClosed')}
+              </span>
+            ) : null}
           </div>
         ),
       },
@@ -261,14 +338,17 @@ export default function BookingsPage() {
       receiptNumber: booking.receiptNumber,
       devoteeName: booking.devotee?.name,
       sevaName: sevaNames.join(', '),
+      _search: [booking.devotee?.mobileNumber, booking.cancellationReason].filter(Boolean).join(' '),
       bookingDate: booking.bookingDate,
       amountCollected: booking.amountCollected,
       status: booking.status,
     };
   });
 
-  const totalPages = Math.max(1, Math.ceil(tableRows.length / PAGE_SIZE));
-  const paginatedRows = tableRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const cancelledCount = tableRows.filter((row) => row.status === 'cancelled').length;
+  const visibleRows = tableRows.filter((row) =>
+    statusFilter === 'all' ? true : statusFilter === 'cancelled' ? row.status === 'cancelled' : row.status !== 'cancelled',
+  );
 
   const calendarEvents = bookings.map((booking) => {
     const sevaNames = getBookingSevas(booking).map((seva) => localeName(seva, lang));
@@ -286,132 +366,58 @@ export default function BookingsPage() {
       <PageHeader
         title={t('bookings.title')}
         description={t('bookings.description')}
-        action={
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            className="rounded-2xl bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:bg-teak"
-          >
-            {t('bookings.createBooking')}
-          </button>
-        }
       />
 
       {/* Full-width calendar */}
-      <BookingCalendar events={calendarEvents} onEventClick={handleEventClick} onDateClick={handleDateClick} />
+      <BookingCalendar events={calendarEvents} onEventClick={handleEventClick} onDateClick={handleDateClick} blockedDates={blockedDates} blockedLabel={t('blockedDates.blocked')} />
 
-      {/* Bookings table with pagination */}
-      <div className="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
-        <div className="mb-5">
-          <h2 className="font-serif text-2xl text-ink">{t('bookings.allBookings')}</h2>
-          <p className="mt-1 text-sm text-teak/80">{t('bookings.allBookingsSubtitle')}</p>
-        </div>
-
-        <DataTable columns={columns} rows={paginatedRows} emptyText={t('bookings.emptyText')} />
-
-        <div className="mt-5 flex flex-col gap-3 border-t border-stone-100 pt-5 text-sm text-teak/80 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            {t('common.showing')}{' '}
-            {tableRows.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
-            {' '}{t('common.to')}{' '}
-            {Math.min(currentPage * PAGE_SIZE, tableRows.length)} {t('common.of')} {tableRows.length}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="rounded-xl border border-sandal px-4 py-2 font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {t('common.prev')}
-            </button>
-            <span className="min-w-[88px] text-center font-semibold text-ink">
-              {t('common.page')} {currentPage} {t('common.of')} {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded-xl border border-sandal px-4 py-2 font-semibold text-ink disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {t('common.next')}
-            </button>
+      {/* Bookings table (search, sort and paging are built into the table) */}
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-ink">{t('bookings.allBookings')}</h2>
+            <p className="mt-1 text-sm text-teak/80">{t('bookings.allBookingsSubtitle')}</p>
           </div>
-        </div>
-      </div>
-
-      {/* Day bookings modal */}
-      {dayBookings !== null ? (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/45 px-4 py-8">
-          <div className="w-full max-w-2xl rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-terracotta/70">{t('bookings.dayView')}</p>
-                <h2 className="mt-1 font-serif text-2xl text-ink">{formatDate(selectedDay)}</h2>
-                <p className="mt-1 text-sm text-teak/70">{dayBookings.length} {t(dayBookings.length !== 1 ? 'bookings.booking_other' : 'bookings.booking_one')}</p>
-              </div>
+          <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5" role="group" aria-label={t('common.status')}>
+            {[
+              ['all', t('bookings.filterAll'), tableRows.length],
+              ['active', t('bookings.filterActive'), tableRows.length - cancelledCount],
+              ['cancelled', t('bookings.filterCancelled'), cancelledCount],
+            ].map(([value, label, count]) => (
               <button
+                key={value}
                 type="button"
-                onClick={() => setDayBookings(null)}
-                className="shrink-0 rounded-xl border border-sandal px-3 py-2 text-sm font-semibold text-ink hover:bg-sandal/40"
+                onClick={() => setStatusFilter(value)}
+                aria-pressed={statusFilter === value}
+                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  statusFilter === value ? 'bg-white text-brand shadow-sm' : 'text-slate-500 hover:text-ink'
+                }`}
               >
-                ✕ {t('common.close')}
+                {label} <span className="font-normal opacity-70">({count})</span>
               </button>
-            </div>
-
-            {dayBookings.length === 0 ? (
-              <p className="mt-6 text-sm text-teak/60">{t('bookings.noBookingsForDay')}</p>
-            ) : (
-              <div className="mt-5 space-y-3">
-                {dayBookings.map((b) => (
-                  <div key={b.id} className="rounded-2xl border border-sandal/60 bg-sandal/20 px-4 py-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-ink truncate">{b.devotee?.name}</p>
-                        <p className="text-sm text-teak/70 truncate">{getBookingSevas(b).map((seva) => localeName(seva, lang)).join(', ')}</p>
-                        <p className="text-xs text-teak/50 mt-0.5">{b.bookingTime} &nbsp;·&nbsp; {formatCurrency(b.amountCollected)} &nbsp;·&nbsp; {b.paymentMode}</p>
-                        <p className="text-xs text-teak/50">Receipt: {b.receiptNumber}</p>
-                      </div>
-                      <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                        <button
-                          type="button"
-                          onClick={() => { setDayBookings(null); setDetailBooking(b); }}
-                          className="rounded-xl border border-sandal px-3 py-1.5 text-xs font-semibold text-ink hover:bg-sandal/40"
-                        >
-                          {t('common.view')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => generateReceipt(b)}
-                          className="rounded-xl border border-terracotta/40 px-3 py-1.5 text-xs font-semibold text-terracotta hover:bg-terracotta/10"
-                        >
-                          {t('common.downloadPDF')}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => { generateReceipt(b); setTimeout(() => window.print(), 800); }}
-                          className="rounded-xl border border-sandal px-3 py-1.5 text-xs font-semibold text-ink hover:bg-sandal/40"
-                        >
-                          {t('common.print')}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
         </div>
-      ) : null}
+
+        <DataTable
+          key={statusFilter}
+          columns={columns}
+          rows={visibleRows}
+          emptyText={t('bookings.emptyText')}
+          searchPlaceholder={t('bookings.searchPlaceholder')}
+          rowClassName={(row) => (row.status === 'cancelled' ? 'opacity-60' : '')}
+        />
+      </div>
 
       {/* Create booking modal */}
       {isCreateOpen ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/45 px-4 py-8">
-          <div className="w-full max-w-2xl rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-card">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="font-serif text-2xl text-ink">{t('bookings.createBooking')}</h2>
-                <p className="mt-1 text-sm text-teak/80">{t('bookings.formSubtitle')}</p>
+                <h2 className="text-lg font-semibold text-ink">{t('bookings.createBooking')}</h2>
+                <p className="mt-1 text-sm text-slate-500">{t('bookings.formSubtitle')}</p>
+                <p className="mt-2 inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{t('bookings.bookingDate')}: {formatDate(bookingDateInput)}</p>
               </div>
               <button
                 type="button"
@@ -423,7 +429,7 @@ export default function BookingsPage() {
             </div>
 
             <form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
-              <div className="md:col-span-2 rounded-2xl border border-sandal/70 bg-sandal/20 px-4 py-3">
+              <div className="md:col-span-2 rounded-lg border border-sandal/70 bg-sandal/20 px-4 py-3">
                 <label className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
                   <input
                     type="checkbox"
@@ -444,15 +450,11 @@ export default function BookingsPage() {
                 <p className="mt-1 text-xs text-teak/70">Turn this on to select multiple sevas and issue one combined receipt.</p>
               </div>
 
+              {/* Devotee identity */}
               {[
                 ['devoteeName', t('bookings.devoteeName'), 'text'],
                 ['mobileNumber', t('bookings.mobileNumber'), 'text'],
                 ['address', t('bookings.address'), 'text'],
-                ['bookingDate', t('bookings.bookingDate'), 'date'],
-                ['bookingTime', t('bookings.bookingTime'), 'time'],
-                ['amountPayable', t('bookings.amountPayable'), 'number'],
-                ['discount', t('bookings.discount'), 'number'],
-                ['paymentReferenceNumber', t('bookings.paymentRef'), 'text'],
               ].map(([name, label, type]) => (
                 <label key={name} className="block text-sm font-semibold text-teak">
                   {label}
@@ -460,7 +462,7 @@ export default function BookingsPage() {
                     {...register(name)}
                     type={type}
                     list={name === 'devoteeName' ? 'devotee-name-options' : undefined}
-                    className="mt-2 w-full rounded-2xl border border-sandal px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-sandal px-4 py-3"
                   />
                   {name === 'devoteeName' ? (
                     <datalist id="devotee-name-options">
@@ -473,10 +475,31 @@ export default function BookingsPage() {
                 </label>
               ))}
 
+              {/* Ritual details */}
+              {[
+                ['gotra', t('bookings.gotra'), metadata.gotras],
+                ['nakshatra', t('bookings.nakshatra'), metadata.nakshatras],
+                ['raashi', t('bookings.raashi'), metadata.raashis],
+              ].map(([name, label, options]) => (
+                <label key={name} className="block text-sm font-semibold text-teak">
+                  {label}
+                  <select {...register(name)} className="mt-2 w-full rounded-lg border border-sandal px-4 py-3">
+                    <option value="">Select {label.toLowerCase()}</option>
+                    {options.map((option) => (
+                      <option key={option.id} value={option.name}>
+                        {localeName(option, lang)}
+                      </option>
+                    ))}
+                  </select>
+                  {errors[name] ? <span className="mt-2 block text-xs text-terracotta">{errors[name].message}</span> : null}
+                </label>
+              ))}
+
+              {/* Seva selection */}
               {isMultiSeva ? (
                 <label className="block text-sm font-semibold text-teak md:col-span-2">
                   {t('bookings.seva')}
-                  <div className="mt-2 grid gap-2 rounded-2xl border border-sandal px-4 py-3 sm:grid-cols-2">
+                  <div className="mt-2 grid gap-2 rounded-lg border border-sandal px-4 py-3 sm:grid-cols-2">
                     {sevas.map((seva) => (
                       <label key={seva.id} className="inline-flex items-start gap-2 text-sm font-medium text-ink">
                         <input type="checkbox" value={seva.id} {...register('sevaIds')} className="mt-0.5" />
@@ -489,32 +512,10 @@ export default function BookingsPage() {
                   </div>
                   {errors.sevaId ? <span className="mt-2 block text-xs text-terracotta">{errors.sevaId.message}</span> : null}
                 </label>
-              ) : null}
-
-              {[
-                ['gotra', t('bookings.gotra'), metadata.gotras],
-                ['nakshatra', t('bookings.nakshatra'), metadata.nakshatras],
-                ['raashi', t('bookings.raashi'), metadata.raashis],
-                ['paymentMode', t('common.paymentMode'), metadata.paymentModes],
-              ].map(([name, label, options]) => (
-                <label key={name} className="block text-sm font-semibold text-teak">
-                  {label}
-                  <select {...register(name)} className="mt-2 w-full rounded-2xl border border-sandal px-4 py-3">
-                    <option value="">Select {label.toLowerCase()}</option>
-                    {options.map((option) => (
-                      <option key={option.id} value={name === 'sevaId' ? option.id : option.name}>
-                        {localeName(option, lang)}
-                      </option>
-                    ))}
-                  </select>
-                  {errors[name] ? <span className="mt-2 block text-xs text-terracotta">{errors[name].message}</span> : null}
-                </label>
-              ))}
-
-              {!isMultiSeva ? (
-                <label className="block text-sm font-semibold text-teak">
+              ) : (
+                <label className="block text-sm font-semibold text-teak md:col-span-2">
                   {t('bookings.seva')}
-                  <select {...register('sevaId')} className="mt-2 w-full rounded-2xl border border-sandal px-4 py-3">
+                  <select {...register('sevaId')} className="mt-2 w-full rounded-lg border border-sandal px-4 py-3">
                     <option value="">Select {t('bookings.seva').toLowerCase()}</option>
                     {sevas.map((option) => (
                       <option key={option.id} value={option.id}>
@@ -524,22 +525,102 @@ export default function BookingsPage() {
                   </select>
                   {errors.sevaId ? <span className="mt-2 block text-xs text-terracotta">{errors.sevaId.message}</span> : null}
                 </label>
+              )}
+
+              {/* Booking date & amounts */}
+              {[
+                ['bookingDate', t('bookings.bookingDate'), 'date'],
+                ['amountPayable', t('bookings.amountPayable'), 'number'],
+                ['donation', t('bookings.donation'), 'number'],
+              ].map(([name, label, type]) => (
+                <label key={name} className={`block text-sm font-semibold text-teak ${name === 'bookingDate' ? 'md:col-span-2' : ''}`}>
+                  {label}
+                  {name === 'bookingDate' ? (
+                    <>
+                      {/* Frozen: the date comes from the calendar cell that was clicked. */}
+                      <input
+                        {...register(name)}
+                        type="date"
+                        readOnly
+                        tabIndex={-1}
+                        aria-readonly="true"
+                        className="mt-2 w-full cursor-not-allowed rounded-lg border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600 outline-none"
+                      />
+                      <span className="mt-1 block text-xs font-normal text-slate-500">{t('bookings.dateLockedHint')}</span>
+                    </>
+                  ) : (
+                    <input
+                      {...register(name)}
+                      type={type}
+                      min={type === 'number' ? 0 : undefined}
+                      className="mt-2 w-full rounded-lg border border-sandal px-4 py-3"
+                    />
+                  )}
+                  {errors[name] ? <span className="mt-2 block text-xs text-terracotta">{errors[name].message}</span> : null}
+                </label>
+              ))}
+
+              <div className="md:col-span-2 flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3 text-sm">
+                <span className="text-slate-600">{t('bookings.totalToCollect')}</span>
+                <span className="text-base font-semibold text-ink">{formatCurrency(totalToCollect)}</span>
+              </div>
+
+              {/* Payment */}
+              <label className="block text-sm font-semibold text-teak">
+                {t('common.paymentMode')}
+                <select {...register('paymentMode')} className="mt-2 w-full rounded-lg border border-sandal px-4 py-3">
+                  <option value="">Select {t('common.paymentMode').toLowerCase()}</option>
+                  {metadata.paymentModes.map((option) => (
+                    <option key={option.id} value={option.name}>
+                      {localeName(option, lang)}
+                    </option>
+                  ))}
+                </select>
+                {errors.paymentMode ? <span className="mt-2 block text-xs text-terracotta">{errors.paymentMode.message}</span> : null}
+              </label>
+
+              <label className="block text-sm font-semibold text-teak">
+                {t('bookings.paymentRef')}
+                <input
+                  {...register('paymentReferenceNumber')}
+                  type="text"
+                  className="mt-2 w-full rounded-lg border border-sandal px-4 py-3"
+                />
+                {errors.paymentReferenceNumber ? <span className="mt-2 block text-xs text-terracotta">{errors.paymentReferenceNumber.message}</span> : null}
+              </label>
+
+              {/* UPI payment: open the QR in a modal stacked on top of this form */}
+              {isUpiPayment ? (
+                <div className="md:col-span-2 flex flex-col gap-3 rounded-lg border border-sandal bg-sandal/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-base font-semibold text-ink">{t('bookings.upiScanTitle')}</p>
+                    <p className="mt-1 text-sm text-teak/80">{t('bookings.upiOpenHint')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsUpiModalOpen(true)}
+                    className="shrink-0 rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-dark"
+                  >
+                    {t('bookings.upiShowQr')}
+                  </button>
+                </div>
               ) : null}
 
+              {/* Notes */}
               <label className="block text-sm font-semibold text-teak md:col-span-2">
                 {t('common.notes')}
-                <input {...register('notes')} className="mt-2 w-full rounded-2xl border border-sandal px-4 py-3" />
+                <input {...register('notes')} className="mt-2 w-full rounded-lg border border-sandal px-4 py-3" />
               </label>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:justify-end md:col-span-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="rounded-2xl border border-sandal px-4 py-3 text-sm font-semibold text-ink"
+                  className="rounded-lg border border-sandal px-4 py-3 text-sm font-semibold text-ink"
                 >
                   {t('common.cancel')}
                 </button>
-                <button type="submit" className="rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white">
+                <button type="submit" className="rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white">
                   {t('bookings.saveAndIssue')}
                 </button>
               </div>
@@ -548,14 +629,64 @@ export default function BookingsPage() {
         </div>
       ) : null}
 
+      {/* UPI QR modal — stacked on top of the create booking modal */}
+      {isCreateOpen && isUpiPayment && isUpiModalOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/55 px-4 py-6">
+          <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-card">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold text-ink">{t('bookings.upiScanTitle')}</h2>
+                <p className="mt-1 text-xs text-teak/80">{t('bookings.upiScanSubtitle')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsUpiModalOpen(false)}
+                className="shrink-0 rounded-xl border border-sandal px-3 py-2 text-sm font-semibold text-ink hover:bg-sandal/40"
+              >
+                {t('common.close')}
+              </button>
+            </div>
+
+            <div className="mt-5 flex flex-col items-center gap-3">
+              <UpiQrCode />
+              {totalToCollect > 0 ? (
+                <p className="text-sm font-semibold text-ink">
+                  {t('bookings.totalToCollect')}: {formatCurrency(totalToCollect)}
+                </p>
+              ) : null}
+              <p className="inline-block rounded-full bg-marigold/25 px-3 py-1 text-xs font-semibold text-teak">
+                {t('bookings.upiDummyBadge')}
+              </p>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setIsUpiModalOpen(false)}
+                className="rounded-lg border border-sandal px-4 py-3 text-sm font-semibold text-ink"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleUpiPaymentComplete}
+                className="rounded-lg bg-moss px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink"
+              >
+                {t('bookings.upiPaymentDone')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Booking detail modal */}
       {detailBooking ? (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/45 px-4 py-8">
-          <div className="w-full max-w-2xl rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
+          <div className="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-card">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.25em] text-terracotta/70">{t('bookings.bookingDetails')}</p>
-                <h2 className="mt-1 font-serif text-2xl text-ink">{detailBooking.devotee?.name}</h2>
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand">{t('bookings.bookingDetails')}</p>
+                <h2 className="mt-1 text-lg font-semibold text-ink">{detailBooking.devotee?.name}</h2>
               </div>
               <button
                 type="button"
@@ -578,57 +709,159 @@ export default function BookingsPage() {
                 [t('common.paymentMode'), detailBooking.paymentMode],
                 [t('bookings.reference'), detailBooking.paymentReferenceNumber || '—'],
                 [t('bookings.amountPayable'), formatCurrency(detailBooking.amountPayable)],
-                [t('bookings.discount'), formatCurrency(detailBooking.discount)],
+                [t('bookings.donation'), formatCurrency(detailBooking.donation)],
                 [t('bookings.amountCollected'), formatCurrency(detailBooking.amountCollected)],
               ].map(([label, value]) => (
                 <div key={label}>
-                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-teak/60">{label}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-teak/60">{label}</p>
                   <p className="mt-1 text-sm font-medium text-ink">{value || '—'}</p>
                 </div>
               ))}
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-teak/60">Status</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-teak/60">Status</p>
                 <div className="mt-1"><StatusBadge value={detailBooking.status} /></div>
               </div>
             </div>
 
             {detailBooking.address || detailBooking.devotee?.address ? (
               <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-teak/60">{t('bookings.address')}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-teak/60">{t('bookings.address')}</p>
                 <p className="mt-1 text-sm font-medium text-ink">{detailBooking.devotee?.address || '—'}</p>
               </div>
             ) : null}
 
             {detailBooking.notes ? (
               <div className="mt-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-teak/60">{t('common.notes')}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-teak/60">{t('common.notes')}</p>
                 <p className="mt-1 text-sm font-medium text-ink">{detailBooking.notes}</p>
               </div>
             ) : null}
 
-            <div className="mt-5 flex flex-col gap-3 rounded-2xl bg-sandal/40 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            {detailBooking.status === 'cancelled' ? (
+              <div className="mt-5 rounded-lg border border-rose-200 bg-rose-50 p-4" role="status">
+                <p className="flex items-center gap-2 text-sm font-semibold text-rose-700">
+                  <Ban className="h-4 w-4" aria-hidden="true" />
+                  {t('bookings.cancelledBanner')}
+                </p>
+                <p className="mt-2 text-sm text-rose-900">{detailBooking.cancellationReason || t('bookings.noReason')}</p>
+                {detailBooking.cancelledAt ? (
+                  <p className="mt-1 text-xs text-rose-700">
+                    {t('bookings.cancelledOnBy', {
+                      date: new Date(detailBooking.cancelledAt).toLocaleString(),
+                      user: detailBooking.cancelledBy || '—',
+                    })}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="mt-5 flex flex-col gap-3 rounded-lg bg-sandal/40 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teak/60">{t('bookings.receiptNumber')}</p>
-                <p className="mt-1 font-serif text-xl text-ink">{detailBooking.receiptNumber}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-teak/60">{t('bookings.receiptNumber')}</p>
+                <p className="mt-1 text-base font-semibold text-ink">{detailBooking.receiptNumber}</p>
               </div>
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => generateReceipt(detailBooking)}
-                  className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white"
+                  onClick={() => openReceipt(detailBooking)}
+                  className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white"
                 >
-                  {t('common.downloadPDF')}
+                  {t('common.viewReceipt')}
                 </button>
                 <button
                   type="button"
-                  onClick={() => { window.print(); }}
+                  onClick={() => openReceipt(detailBooking, { print: true })}
                   className="rounded-xl border border-sandal px-4 py-2 text-sm font-semibold text-ink"
                 >
                   {t('common.print')}
                 </button>
+                {detailBooking.cancellable ? (
+                  <button
+                    type="button"
+                    onClick={() => openCancel(detailBooking)}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50"
+                  >
+                    <Ban className="h-4 w-4" aria-hidden="true" />
+                    {t('bookings.cancelBooking')}
+                  </button>
+                ) : null}
               </div>
             </div>
+            {detailBooking.status !== 'cancelled' && !detailBooking.cancellable ? (
+              <p className="mt-3 flex items-center gap-2 text-xs text-slate-500" role="note">
+                <Ban className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                {t('bookings.cancelClosedHint', { date: formatDate(detailBooking.bookingDate) })}
+              </p>
+            ) : null}
           </div>
+        </div>
+      ) : null}
+
+      {/* Cancel booking: confirmation with a required reason */}
+      {cancelTarget ? (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-slate-900/60 px-4 py-10" role="dialog" aria-modal="true" aria-label={t('bookings.cancelDialogTitle')}>
+          <form onSubmit={handleConfirmCancel} className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
+            <div className="flex items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600">
+                <Ban className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold text-ink">{t('bookings.cancelDialogTitle')}</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {cancelTarget.receiptNumber} · {cancelTarget.devotee?.name} · {formatCurrency(cancelTarget.amountCollected)}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+              {t('bookings.cancelWarning', { amount: formatCurrency(cancelTarget.amountCollected) })}
+            </p>
+            <p className="mt-2 text-xs text-slate-500">{t('bookings.cancelDeadlineNote', { date: formatDate(cancelTarget.bookingDate) })}</p>
+
+            <label className="mt-4 block text-sm font-medium text-slate-700">
+              {t('bookings.reasonLabel')}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {['reasonDevotee', 'reasonMistake', 'reasonNotPerformed', 'reasonDuplicate'].map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setCancelReason(t(`bookings.${key}`))}
+                    className="rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-brand hover:text-brand"
+                  >
+                    {t(`bookings.${key}`)}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={cancelReason}
+                onChange={(event) => setCancelReason(event.target.value)}
+                placeholder={t('bookings.reasonPlaceholder')}
+                rows={3}
+                maxLength={500}
+                required
+                autoFocus
+                className="mt-2 w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+            </label>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeCancel}
+                disabled={cancelling}
+                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                {t('bookings.keepBooking')}
+              </button>
+              <button
+                type="submit"
+                disabled={cancelling || cancelReason.trim().length < 3}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {cancelling ? t('bookings.cancelling') : t('bookings.confirmCancel')}
+              </button>
+            </div>
+          </form>
         </div>
       ) : null}
     </div>

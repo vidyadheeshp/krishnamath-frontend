@@ -5,11 +5,10 @@ import { useTranslation } from 'react-i18next';
 import api from '../api/client';
 import DataTable from '../components/DataTable';
 import PageHeader from '../components/PageHeader';
+import { EXPENSE_CATEGORIES, expenseCategoryLabel } from '../constants/expenseCategories';
 import { formatCurrency, formatDate } from '../utils/format';
 
-const CATEGORIES = ['Maintenance', 'Utilities', 'Salaries', 'Events', 'Supplies', 'Miscellaneous'];
 const PAYMENT_MODES = ['Cash', 'UPI', 'Bank Transfer', 'Cheque', 'Card'];
-const PAGE_SIZE = 10;
 
 const makeInitialForm = () => ({
   expenseTitle: '',
@@ -26,7 +25,6 @@ export default function ExpendituresPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(makeInitialForm());
-  const [currentPage, setCurrentPage] = useState(1);
   const { t } = useTranslation();
 
   const loadExpenditures = async () => {
@@ -42,22 +40,19 @@ export default function ExpendituresPage() {
     loadExpenditures();
   }, []);
 
-  const totalPages = Math.max(1, Math.ceil(expenditures.length / PAGE_SIZE));
-
-  const tableRows = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE;
-    return expenditures.slice(startIndex, startIndex + PAGE_SIZE).map((exp, index) => ({
-      ...exp,
-      slNo: startIndex + index + 1,
-      _expenditure: exp,
-    }));
-  }, [expenditures, currentPage]);
+  const tableRows = useMemo(() => expenditures.map((exp) => ({ ...exp, _expenditure: exp })), [expenditures]);
 
   const columns = useMemo(
     () => [
       { key: 'slNo', header: t('common.slNo') },
       { key: 'expenseTitle', header: t('expenditures.expense') },
-      { key: 'expenseCategory', header: t('common.category') },
+      {
+        key: 'expenseCategory',
+        header: t('common.category'),
+        render: (value) => expenseCategoryLabel(t, value),
+        searchValue: (row) => expenseCategoryLabel(t, row.expenseCategory),
+        sortValue: (row) => expenseCategoryLabel(t, row.expenseCategory),
+      },
       { key: 'expenseAmount', header: t('common.amount'), render: (value) => formatCurrency(value) },
       { key: 'expenseDate', header: t('common.date'), render: (value) => formatDate(value) },
       { key: 'paymentMode', header: t('common.paymentMode') },
@@ -147,22 +142,22 @@ export default function ExpendituresPage() {
         type={type}
         value={form[name]}
         onChange={(e) => setForm((c) => ({ ...c, [name]: e.target.value }))}
-        className="mt-1 w-full rounded-2xl border border-sandal px-4 py-2.5 text-sm font-normal text-ink outline-none focus:border-teak"
+        className="mt-1 w-full rounded-lg border border-sandal px-4 py-2.5 text-sm font-normal text-ink outline-none focus:border-teak"
         required={['expenseTitle', 'expenseAmount', 'expenseDate'].includes(name)}
       />
     </label>
   );
 
-  const select = (name, label, options) => (
+  const select = (name, label, options, optionLabel = (option) => option) => (
     <label key={name} className="block text-sm font-semibold text-teak">
       {label}
       <select
         name={name}
         value={form[name]}
         onChange={(e) => setForm((c) => ({ ...c, [name]: e.target.value }))}
-        className="mt-1 w-full rounded-2xl border border-sandal px-4 py-2.5 text-sm font-normal text-ink outline-none focus:border-teak"
+        className="mt-1 w-full rounded-lg border border-sandal px-4 py-2.5 text-sm font-normal text-ink outline-none focus:border-teak"
       >
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        {options.map((o) => <option key={o} value={o}>{optionLabel(o)}</option>)}
       </select>
     </label>
   );
@@ -175,54 +170,28 @@ export default function ExpendituresPage() {
       />
 
       {/* Table card */}
-      <div className="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-2xl text-ink">{t('expenditures.allExpenditures')}</h2>
+          <h2 className="text-lg font-semibold text-ink">{t('expenditures.allExpenditures')}</h2>
           <button
             type="button"
             onClick={handleOpenCreate}
-            className="rounded-2xl bg-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-ink/80"
+            className="rounded-lg bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-ink/80"
           >
             + {t('expenditures.addExpenditure')}
           </button>
         </div>
 
-        <DataTable columns={columns} rows={tableRows} emptyText={t('expenditures.emptyText')} />
+        <DataTable columns={columns} rows={tableRows} emptyText={t('expenditures.emptyText')} searchPlaceholder={t('expenditures.searchPlaceholder')} />
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between text-sm text-teak">
-            <span>
-              {t('common.page')} {currentPage} {t('common.of')} {totalPages}
-            </span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-                className="rounded-xl border border-sandal px-3 py-1.5 font-semibold disabled:opacity-40"
-              >
-                ← {t('common.prev')}
-              </button>
-              <button
-                type="button"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-                className="rounded-xl border border-sandal px-3 py-1.5 font-semibold disabled:opacity-40"
-              >
-                {t('common.next')} →
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Add / Edit modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-ink/45 px-4 py-8">
-          <div className="w-full max-w-lg rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
+          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-card">
             <div className="flex items-center justify-between gap-4">
-              <h2 className="font-serif text-2xl text-ink">
+              <h2 className="text-lg font-semibold text-ink">
                 {editingId ? t('expenditures.editExpenditure') : t('expenditures.addExpenditure')}
               </h2>
               <button
@@ -237,7 +206,13 @@ export default function ExpendituresPage() {
             <form onSubmit={handleSubmit}>
               <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {field('expenseTitle', t('expenditures.expenseTitle'))}
-                {select('expenseCategory', t('common.category'), CATEGORIES)}
+                {select(
+                  'expenseCategory',
+                  t('common.category'),
+                  // An older record may carry a category that is no longer on the list; keep it selectable.
+                  EXPENSE_CATEGORIES.includes(form.expenseCategory) ? EXPENSE_CATEGORIES : [form.expenseCategory, ...EXPENSE_CATEGORIES],
+                  (option) => expenseCategoryLabel(t, option),
+                )}
                 {field('expenseAmount', t('common.amount'), 'number')}
                 {field('expenseDate', t('common.date'), 'date')}
                 {select('paymentMode', t('common.paymentMode'), PAYMENT_MODES)}
@@ -250,13 +225,13 @@ export default function ExpendituresPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 rounded-2xl border border-sandal px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sandal/40"
+                  className="flex-1 rounded-lg border border-sandal px-4 py-2.5 text-sm font-semibold text-ink hover:bg-sandal/40"
                 >
                   {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-2xl bg-ink px-4 py-2.5 text-sm font-semibold text-white hover:bg-ink/80"
+                  className="flex-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-ink/80"
                 >
                   {editingId ? t('expenditures.saveChanges') : t('expenditures.saveExpenditure')}
                 </button>

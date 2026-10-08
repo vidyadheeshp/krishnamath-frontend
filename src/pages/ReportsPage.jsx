@@ -18,8 +18,6 @@ const PERIODS = [
   { key: 'yearly', labelKey: 'reports.yearly' },
 ];
 
-const PAGE_SIZE = 10;
-const SEVA_PAGE_SIZE = 8;
 
 function getPeriodRange(period) {
   const now = new Date();
@@ -90,7 +88,7 @@ const PDF_COLS = [
   { header: 'Payment Mode', width: 55, align: 'left' },
 ];
 
-function downloadPDF({ periodLabel, activePeriod, filteredBookings, totalCollected, totalSpent, netBalance }) {
+function downloadPDF({ periodLabel, activePeriod, filteredBookings, totalCollected, totalSpent, netBalance, lang }) {
   const doc = new jsPDF({ format: 'a4', unit: 'mm', orientation: 'landscape' });
   const W = doc.internal.pageSize.getWidth();  // 297mm
   const H = doc.internal.pageSize.getHeight(); // 210mm
@@ -103,7 +101,7 @@ function downloadPDF({ periodLabel, activePeriod, filteredBookings, totalCollect
     doc.setTextColor(...PDF_C.white);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(15);
-    doc.text('Krishnamath', W / 2, 11, { align: 'center' });
+    doc.text('Sri Krishnamath & Sabhabhavan, Belagavi', W / 2, 11, { align: 'center' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(255, 220, 180);
@@ -236,7 +234,7 @@ function downloadPDF({ periodLabel, activePeriod, filteredBookings, totalCollect
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...PDF_C.muted);
-  doc.text('Krishnamath — Temple Management System', W / 2, H - 3, { align: 'center' });
+  doc.text('Sri Krishnamath & Sabhabhavan, Belagavi — Temple Management System', W / 2, H - 3, { align: 'center' });
 
   doc.save(`krishnamath-${activePeriod}-report.pdf`);
 }
@@ -244,8 +242,6 @@ function downloadPDF({ periodLabel, activePeriod, filteredBookings, totalCollect
 export default function ReportsPage() {
   const [reports, setReports] = useState(null);
   const [activePeriod, setActivePeriod] = useState('monthly');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sevaPage, setSevaPage] = useState(1);
   const { t, i18n: i18nInst } = useTranslation();
   const lang = i18nInst.language;
 
@@ -311,26 +307,16 @@ export default function ReportsPage() {
     return Object.values(map).sort((a, b) => a.revenue - b.revenue);
   }, [filteredBookings, lang]);
 
-  const sevaTotalPages = Math.max(1, Math.ceil(periodSevaRevenue.length / SEVA_PAGE_SIZE));
-  const paginatedSevas = useMemo(() => {
-    const start = (sevaPage - 1) * SEVA_PAGE_SIZE;
-    return periodSevaRevenue.slice(start, start + SEVA_PAGE_SIZE).map((row, i) => ({
-      ...row,
-      slNo: start + i + 1,
-    }));
-  }, [periodSevaRevenue, sevaPage]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / PAGE_SIZE));
-
-  const tableRows = useMemo(() => {
-    const startIndex = (currentPage - 1) * PAGE_SIZE;
-    return filteredBookings.slice(startIndex, startIndex + PAGE_SIZE).map((b, i) => ({
-      ...b,
-      slNo: startIndex + i + 1,
-      devoteeName: b.devotee?.name ?? '—',
-      sevaName: localeName(b.seva, lang) || '—',
-    }));
-  }, [filteredBookings, currentPage, lang]);
+  const tableRows = useMemo(
+    () =>
+      filteredBookings.map((b) => ({
+        ...b,
+        devoteeName: b.devotee?.name ?? '—',
+        sevaName: localeName(b.seva, lang) || '—',
+        _search: b.devotee?.mobileNumber,
+      })),
+    [filteredBookings, lang],
+  );
 
   const bookingColumns = useMemo(
     () => [
@@ -374,12 +360,10 @@ export default function ReportsPage() {
 
   const handleChangePeriod = (key) => {
     setActivePeriod(key);
-    setCurrentPage(1);
-    setSevaPage(1);
   };
 
   const handleDownloadPDF = () => {
-    downloadPDF({ periodLabel, activePeriod, filteredBookings, totalCollected, totalSpent, netBalance });
+    downloadPDF({ periodLabel, activePeriod, filteredBookings, totalCollected, totalSpent, netBalance, lang });
   };
 
   const handleDownload = () => {
@@ -408,7 +392,7 @@ export default function ReportsPage() {
       />
 
       {/* Period selector */}
-      <div className="rounded-[1.75rem] border border-white/70 bg-white p-5 shadow-card">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card">
         <p className="mb-3 text-sm font-semibold text-teak">{t('reports.selectPeriod')}</p>
         <div className="flex flex-wrap gap-2">
           {PERIODS.map((p) => (
@@ -416,7 +400,7 @@ export default function ReportsPage() {
               key={p.key}
               type="button"
               onClick={() => handleChangePeriod(p.key)}
-              className={`rounded-2xl border px-5 py-2 text-sm font-semibold transition-colors ${
+              className={`rounded-lg border px-5 py-2 text-sm font-semibold transition-colors ${
                 activePeriod === p.key
                   ? 'border-ink bg-ink text-white'
                   : 'border-sandal bg-white text-ink hover:bg-sandal/40'
@@ -442,15 +426,15 @@ export default function ReportsPage() {
       </div>
 
       {/* Bookings list for period */}
-      <div className="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-serif text-2xl text-ink">{periodLabel} {t('reports.bookings')}</h2>
+          <h2 className="text-lg font-semibold text-ink">{periodLabel} {t('reports.bookings')}</h2>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={handleDownload}
               disabled={filteredBookings.length === 0}
-              className="rounded-2xl border border-sandal bg-white px-5 py-2.5 text-sm font-semibold text-ink hover:bg-sandal/40 disabled:opacity-40"
+              className="rounded-lg border border-sandal bg-white px-5 py-2.5 text-sm font-semibold text-ink hover:bg-sandal/40 disabled:opacity-40"
             >
               {t('common.downloadCSV')}
             </button>
@@ -458,7 +442,7 @@ export default function ReportsPage() {
               type="button"
               onClick={handleDownloadPDF}
               disabled={filteredBookings.length === 0}
-              className="rounded-2xl border border-terracotta/40 bg-white px-5 py-2.5 text-sm font-semibold text-terracotta hover:bg-terracotta/10 disabled:opacity-40"
+              className="rounded-lg border border-terracotta/40 bg-white px-5 py-2.5 text-sm font-semibold text-terracotta hover:bg-terracotta/10 disabled:opacity-40"
             >
               {t('common.downloadPDF')}
             </button>
@@ -471,36 +455,13 @@ export default function ReportsPage() {
           emptyText={t('reports.noBookings')}
         />
 
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-between text-sm text-teak">
-            <span>{t('common.page')} {currentPage} {t('common.of')} {totalPages}</span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-                className="rounded-xl border border-sandal px-3 py-1.5 font-semibold disabled:opacity-40"
-              >
-                ← {t('common.prev')}
-              </button>
-              <button
-                type="button"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-                className="rounded-xl border border-sandal px-3 py-1.5 font-semibold disabled:opacity-40"
-              >
-                {t('common.next')} →
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Period payment mode & seva revenue breakdown */}
       <div className="grid gap-6 xl:grid-cols-2">
         {/* Payment mode breakdown */}
-        <div className="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
-          <h2 className="mb-4 font-serif text-xl text-ink">{periodLabel} — {t('reports.byPaymentMode')}</h2>
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
+          <h2 className="mb-4 text-base font-semibold text-ink">{periodLabel} — {t('reports.byPaymentMode')}</h2>
           <DataTable
             columns={paymentColumns}
             rows={periodPaymentModes}
@@ -509,36 +470,14 @@ export default function ReportsPage() {
         </div>
 
         {/* Seva revenue breakdown */}
-        <div className="rounded-[1.75rem] border border-white/70 bg-white p-6 shadow-card">
-          <h2 className="mb-4 font-serif text-xl text-ink">{periodLabel} — {t('reports.bySeva')}</h2>
+        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
+          <h2 className="mb-4 text-base font-semibold text-ink">{periodLabel} — {t('reports.bySeva')}</h2>
           <DataTable
             columns={sevaColumns}
-            rows={paginatedSevas}
+            rows={periodSevaRevenue}
             emptyText={t('reports.noSevaRevenue')}
+            defaultSort={{ key: 'revenue', direction: 'desc' }}
           />
-          {sevaTotalPages > 1 && (
-            <div className="mt-4 flex items-center justify-between text-sm text-teak">
-              <span>{t('common.page')} {sevaPage} {t('common.of')} {sevaTotalPages}</span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={sevaPage === 1}
-                  onClick={() => setSevaPage((p) => p - 1)}
-                  className="rounded-xl border border-sandal px-3 py-1.5 font-semibold disabled:opacity-40"
-                >
-                  ← {t('common.prev')}
-                </button>
-                <button
-                  type="button"
-                  disabled={sevaPage === sevaTotalPages}
-                  onClick={() => setSevaPage((p) => p + 1)}
-                  className="rounded-xl border border-sandal px-3 py-1.5 font-semibold disabled:opacity-40"
-                >
-                  {t('common.next')} →
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

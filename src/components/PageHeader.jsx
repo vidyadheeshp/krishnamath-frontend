@@ -1,12 +1,11 @@
 export default function PageHeader({ title, description, action }) {
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-terracotta/70">Temple operations</p>
-        <h1 className="mt-2 font-serif text-3xl text-ink lg:text-4xl">{title}</h1>
-        <p className="mt-2 max-w-2xl text-sm text-teak/80">{description}</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+        {description ? <p className="mt-1 max-w-2xl text-sm text-slate-500">{description}</p> : null}
       </div>
-      {action ? <div>{action}</div> : null}
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }

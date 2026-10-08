@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" role="img" aria-label="Sri Krishnamath &amp; Sabhabhavan, Belagavi">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#3730a3"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+  </defs>
+  <g>
+    <rect width="64" height="64" rx="16" fill="url(#bg)"/>
+    <path d="M32 4.6c1.5 1.7 2.3 3 2.3 4.2a2.3 2.3 0 0 1-4.6 0c0-1.2.8-2.5 2.3-4.2z" fill="url(#gold)"/>
+    <rect x="31.1" y="10.6" width="1.8" height="3" rx=".9" fill="url(#gold)"/>
+    <path d="M26.5 14.5h11l2.2 7.6H24.3z" fill="#fff"/>
+    <path d="M22.4 23.6h19.2l3.3 7.8H19.1z" fill="#fff" fill-opacity=".92"/>
+    <path d="M17.2 32.9h29.6l4.2 8.3H13z" fill="#fff" fill-opacity=".84"/>
+    <rect x="10" y="42.6" width="44" height="9" rx="2.2" fill="#fff"/>
+    <rect x="10" y="42.6" width="44" height="1.8" fill="url(#gold)"/>
+    <path d="M28 51.6v-4.4a4 4 0 0 1 8 0v4.4z" fill="#3730a3"/>
+    <path d="M20 56.4c3.4-2.2 7.6-2.2 12 0 4.4-2.2 8.6-2.2 12 0" fill="none" stroke="#fde68a" stroke-width="1.6" stroke-linecap="round"/>
+  </g>
+  <text x="80" y="35" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="29" font-weight="700" letter-spacing="-0.5" fill="#ffffff">Sri Krishnamath</text>
+  <text x="81" y="52" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="10.5" font-weight="600" letter-spacing="2.4" fill="#a5b4fc">&amp; SABHABHAVAN, BELAGAVI</text>
+</svg>

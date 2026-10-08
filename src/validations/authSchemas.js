@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const loginSchema = z.object({
-  email: z.string().email('Enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email('Enter a valid email address / ಮಾನ್ಯ ಇಮೇಲ್ ನಮೂದಿಸಿ'),
+  password: z.string().min(6, 'Password must be at least 6 characters / ಪಾಸ್‌ವರ್ಡ್ ಕನಿಷ್ಠ 6 ಅಕ್ಷರಗಳಿರಬೇಕು'),
 });
 
 export const bookingSchema = z
@@ -12,10 +12,9 @@ export const bookingSchema = z
     sevaId: z.string().optional(),
     sevaIds: z.array(z.string()).optional().default([]),
     bookingDate: z.string().min(1, 'Select a booking date'),
-    bookingTime: z.string().min(1, 'Select a booking time'),
     paymentMode: z.string().min(1, 'Choose a payment mode'),
     amountPayable: z.coerce.number().min(1, 'Amount must be greater than zero'),
-    discount: z.coerce.number().min(0).default(0),
+    donation: z.coerce.number().min(0).default(0),
     address: z.string().optional(),
     gotra: z.string().optional(),
     nakshatra: z.string().optional(),

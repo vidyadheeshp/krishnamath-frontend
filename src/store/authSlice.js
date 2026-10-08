@@ -32,6 +32,10 @@ const authSlice = createSlice({
     error: null,
   },
   reducers: {
+    profileUpdated(state, action) {
+      state.user = { ...state.user, ...action.payload };
+      localStorage.setItem('temple-user', JSON.stringify(state.user));
+    },
     logout(state) {
       state.token = null;
       state.user = null;
@@ -69,5 +73,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout } = authSlice.actions;
+export const { logout, profileUpdated } = authSlice.actions;
 export default authSlice.reducer;

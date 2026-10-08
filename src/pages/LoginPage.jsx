@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
@@ -6,13 +7,31 @@ import { Navigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
+import Logo from '../components/Logo';
+import { homePathFor } from '../constants/navigation';
 import { login } from '../store/authSlice';
 import { loginSchema } from '../validations/authSchemas';
 
+// Shows the same text in English and Kannada side by side, independent of the language toggle.
+const bilingualKeys = (t, key) => ({ en: t(key, { lng: 'en' }), kn: t(key, { lng: 'kn' }) });
+
+function Bilingual({ text }) {
+  return (
+    <>
+      {text.en}
+      <span className="font-normal opacity-75"> / {text.kn}</span>
+    </>
+  );
+}
+
+const inputClass =
+  'w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-2 focus:ring-brand/20';
+
 export default function LoginPage() {
   const dispatch = useDispatch();
-  const { token, status, error } = useSelector((state) => state.auth);
+  const { token, user, status, error } = useSelector((state) => state.auth);
   const { t } = useTranslation();
+  const text = (key) => bilingualKeys(t, key);
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
@@ -20,10 +39,7 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
+    defaultValues: { email: '', password: '' },
   });
 
   useEffect(() => {
@@ -36,109 +52,94 @@ export default function LoginPage() {
     const result = await dispatch(login(values));
 
     if (login.fulfilled.match(result)) {
-      toast.success('Welcome back');
+      toast.success(`${text('login.welcome').en} / ${text('login.welcome').kn}`);
     }
   };
 
   if (token) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={homePathFor(user?.role)} replace />;
   }
 
-  const features = [
-    [t('login.feature1Title'), t('login.feature1Desc')],
-    [t('login.feature2Title'), t('login.feature2Desc')],
-    [t('login.feature3Title'), t('login.feature3Desc')],
-  ];
-
   return (
-    <div className="min-h-screen bg-[linear-gradient(135deg,_#2b1b14_0%,_#6a2f1d_38%,_#f2b84b_100%)] px-4 py-10 text-white">
-      <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="flex flex-col items-center rounded-[2rem] border border-white/10 bg-white/10 p-8 backdrop-blur lg:p-12">
-          {/* Krishna deity image */}
-          <div className="mb-8 flex flex-col items-center">
-            <div className="relative rounded-[1.5rem] border-4 border-yellow-400/70 p-1 shadow-[0_0_40px_rgba(242,184,75,0.35)]">
-              <img
-                src="/krishna.jpg"
-                alt="Lord Krishna — Krishnamath Belagvi"
-                className="h-56 w-44 rounded-[1.1rem] object-cover object-top sm:h-64 sm:w-52"
-              />
-              <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-yellow-400/60 bg-[#2b1b14]/90 px-4 py-1 text-xs font-semibold tracking-widest text-yellow-300">
-                ಕೃಷ್ಣಮಠ
-              </span>
+    <div className="grid min-h-screen lg:grid-cols-2">
+      <section className="relative hidden flex-col items-center justify-center overflow-hidden bg-slate-900 p-12 text-white lg:flex">
+        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand/30 blur-3xl" aria-hidden="true" />
+        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-amber-400/10 blur-3xl" aria-hidden="true" />
+
+        <figure className="relative flex flex-col items-center text-center">
+          <img
+            src="/krishna.jpg"
+            alt="Lord Krishna"
+            className="h-80 w-64 rounded-2xl object-cover object-top shadow-2xl ring-1 ring-white/20"
+          />
+          <figcaption className="mt-8">
+            <p className="text-2xl font-semibold tracking-tight">ಶ್ರೀ ಕೃಷ್ಣಮಠ ಮತ್ತು ಸಭಾಭವನ, ಬೆಳಗಾವಿ</p>
+            <p className="mt-2 text-lg font-medium text-slate-200">Sri Krishnamath & Sabhabhavan, Belagavi</p>
+          </figcaption>
+        </figure>
+      </section>
+
+      <section className="flex items-center justify-center bg-white px-6 py-12">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 flex flex-col items-center gap-4 lg:hidden">
+            <img src="/krishna.jpg" alt="Lord Krishna" className="h-28 w-28 rounded-full object-cover object-top ring-4 ring-indigo-100" />
+            <div className="text-center">
+              <p className="text-base font-semibold text-ink">ಶ್ರೀ ಕೃಷ್ಣಮಠ ಮತ್ತು ಸಭಾಭವನ, ಬೆಳಗಾವಿ</p>
+              <p className="text-sm text-slate-500">Sri Krishnamath & Sabhabhavan, Belagavi</p>
             </div>
           </div>
-          <p className="text-center text-xs uppercase tracking-[0.45em] text-white/70">{t('login.suite')}</p>
-          <h1 className="mt-5 text-center max-w-xl font-serif text-4xl leading-tight lg:text-5xl">
-            {t('login.headline')}
-          </h1>
-          <p className="mt-6 text-center max-w-xl text-base text-white/80">
-            {t('login.subline')}
-          </p>
-          <div className="mt-10 w-full grid gap-4 sm:grid-cols-3">
-            {features.map(([title, description]) => (
-              <div key={title} className="rounded-[1.5rem] border border-white/15 bg-black/10 p-4">
-                <p className="font-semibold">{title}</p>
-                <p className="mt-2 text-sm text-white/75">{description}</p>
-              </div>
-            ))}
+          <div className="hidden lg:block">
+            <Logo tone="dark" subtitle={`${t('nav.tagline', { lng: 'en' })} · ${t('nav.tagline', { lng: 'kn' })}`} />
           </div>
-        </section>
-        <section className="rounded-[2rem] bg-[#fff8ee] p-8 text-ink shadow-2xl lg:p-10">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.35em] text-terracotta/70">Admin login</p>
-            <h2 className="mt-3 font-serif text-4xl">Enter the sanctum control room</h2>
-            <p className="mt-3 text-sm text-teak/80">Demo access is prefilled so you can verify the workflow immediately.</p>
-          </div>
-          <form className="mt-8 space-y-5" onSubmit={handleSubmit(onSubmit)}>
+          <h2 className="mt-8 text-2xl font-semibold tracking-tight text-ink lg:mt-10"><Bilingual text={text('login.title')} /></h2>
+
+          <form className="mt-6 space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-teak">{t('login.email')}</span>
+              <span className="mb-1.5 block text-sm font-medium text-slate-700">
+                <Bilingual text={text('login.email')} />
+              </span>
               <input
                 {...register('email')}
-                className="w-full rounded-2xl border border-sandal bg-white px-4 py-3 outline-none transition focus:border-terracotta"
-                placeholder="admin@temple.local"
-                autoComplete="email"
+                type="email"
+                className={inputClass}
+                placeholder="you@krishnamath.co.in"
+                autoComplete="username"
               />
-              {errors.email ? <span className="mt-2 block text-xs text-terracotta">{errors.email.message}</span> : null}
+              {errors.email ? <span className="mt-1.5 block text-xs text-rose-600">{errors.email.message}</span> : null}
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-semibold text-teak">{t('login.password')}</span>
+              <span className="mb-1.5 block text-sm font-medium text-slate-700">
+                <Bilingual text={text('login.password')} />
+              </span>
               <div className="relative">
                 <input
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
-                  className="w-full rounded-2xl border border-sandal bg-white px-4 py-3 pr-12 outline-none transition focus:border-terracotta"
+                  className={`${inputClass} pr-11`}
                   placeholder="••••••••"
+                  autoComplete="current-password"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-teak/60 hover:text-teak"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((value) => !value)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  aria-label={showPassword ? 'Hide password / ಪಾಸ್‌ವರ್ಡ್ ಮರೆಮಾಡಿ' : 'Show password / ಪಾಸ್‌ವರ್ಡ್ ತೋರಿಸಿ'}
                 >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.477 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
+                  {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
                 </button>
               </div>
-              {errors.password ? <span className="mt-2 block text-xs text-terracotta">{errors.password.message}</span> : null}
+              {errors.password ? <span className="mt-1.5 block text-xs text-rose-600">{errors.password.message}</span> : null}
             </label>
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="w-full rounded-2xl bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-teak disabled:opacity-70"
+              className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand/40 focus:ring-offset-2 disabled:opacity-70"
             >
-              {status === 'loading' ? t('login.signingIn') : t('login.signIn')}
+              {status === 'loading' ? <Bilingual text={text('login.signingIn')} /> : <Bilingual text={text('login.signIn')} />}
             </button>
           </form>
-        </section>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
