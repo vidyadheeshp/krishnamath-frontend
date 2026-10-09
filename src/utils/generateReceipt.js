@@ -1,13 +1,19 @@
 import jsPDF from 'jspdf';
-import { toast } from 'sonner';
-
 import { CATEGORY_NAMES } from '../constants/paymentCategories';
 import { formatDate } from './format';
+import { openPdfWindow } from './pdfWindow';
+import { loadReceiptBackground } from './receiptBackground';
 
 // Half of an A4 sheet (A4 landscape cut across the middle): 210 x 148.5 mm.
 const PAGE = [210, 148.5];
 const BLACK = [20, 20, 20];
 const GREY = [110, 110, 110];
+
+// Printed at the foot of every receipt.
+const CONTACTS = [
+  { name: 'Shrinivasachar Honnidibba', phone: '+91-9886457735' },
+  { name: 'M.G. Bhat', phone: '+91-9986779878' },
+];
 
 // The built-in PDF fonts have no rupee glyph, so amounts are written as "Rs. 1,234".
 const formatRs = (value) =>
@@ -55,7 +61,7 @@ const amountInWords = (value) => {
   return `${rupeeText}${paiseText} Only`;
 };
 
-function buildReceipt(booking) {
+function buildReceipt(booking, background = null) {
   const doc = new jsPDF({ format: PAGE, unit: 'mm', orientation: 'landscape' });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -93,26 +99,34 @@ function buildReceipt(booking) {
     return y + lines.length * 6 + 1.5;
   };
 
+  // ── Background picture (optional, already faded) ─────────────────────────
+  if (background) {
+    const scale = Math.min((W - 20) / background.width, (H - 20) / background.height);
+    const width = background.width * scale;
+    const height = background.height * scale;
+    doc.addImage(background.dataUrl, 'JPEG', (W - width) / 2, (H - height) / 2, width, height);
+  }
+
   // ── Frame ────────────────────────────────────────────────────────────────
   doc.setDrawColor(...BLACK);
   doc.setLineWidth(0.4);
   doc.rect(7, 7, W - 14, H - 14);
 
   // ── Heading ──────────────────────────────────────────────────────────────
-  text('Sri Krishnamath & Sabhabhavan, Belagavi', W / 2, 20, { size: 17, style: 'bold', align: 'center' });
-  text(booking.receiptTitle || 'SEVA RECEIPT', W / 2, 34, { size: 11, style: 'bold', align: 'center' });
+  text('Sri Krishnamath & Sabhabhavan, Belagavi', W / 2, 18, { size: 17, style: 'bold', align: 'center' });
+  text(booking.receiptTitle || 'SEVA RECEIPT', W / 2, 28, { size: 11, style: 'bold', align: 'center' });
   doc.setLineWidth(0.3);
   doc.setDrawColor(...BLACK);
-  doc.line(W / 2 - 22, 35.6, W / 2 + 22, 35.6);
+  doc.line(W / 2 - 22, 29.6, W / 2 + 22, 29.6);
 
   // ── Receipt number / date ────────────────────────────────────────────────
   const issuedOn = booking.createdAt ? formatDate(booking.createdAt) : formatDate(booking.bookingDate);
-  text('Receipt No.:', M, 46, { size: 10 });
-  text(booking.receiptNumber ?? '-', M + 23, 46, { size: 10.5, style: 'bold' });
-  text(issuedOn, R, 46, { size: 10.5, style: 'bold', align: 'right' });
+  text('Receipt No.:', M, 39, { size: 10 });
+  text(booking.receiptNumber ?? '-', M + 23, 39, { size: 10.5, style: 'bold' });
+  text(issuedOn, R, 39, { size: 10.5, style: 'bold', align: 'right' });
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
-  text('Date:', R - doc.getTextWidth(issuedOn) - 3, 46, { size: 10, align: 'right' });
+  text('Date:', R - doc.getTextWidth(issuedOn) - 3, 39, { size: 10, align: 'right' });
 
   // ── Body ─────────────────────────────────────────────────────────────────
   const devotee = booking.devotee || {};
@@ -120,7 +134,7 @@ function buildReceipt(booking) {
   const sevaNames = sevas.map((seva) => seva?.name).filter(Boolean).join(', ');
   const contentWidth = R - M;
   const third = contentWidth / 3;
-  let y = 58;
+  let y = 49;
 
   y = fillLine('Received with thanks from', devotee.name, M, y, contentWidth);
 
@@ -147,7 +161,7 @@ function buildReceipt(booking) {
   y = fillLine('Sum of rupees', amountInWords(booking.amountCollected), M, y, contentWidth);
 
   // ── Amount box + signature ───────────────────────────────────────────────
-  const boxY = Math.max(y + 5, 106);
+  const boxY = Math.max(y + 4, 96);
   doc.setLineWidth(0.5);
   doc.setDrawColor(...BLACK);
   doc.rect(M, boxY, 62, 13);
@@ -169,7 +183,23 @@ function buildReceipt(booking) {
   doc.line(R - 52, boxY + 11, R, boxY + 11);
   text('Authorised Signatory', R - 26, boxY + 16, { size: 9, align: 'center' });
 
-  text('Thank you for your seva. May Sri Krishna bless you.', W / 2, H - 10.5, { size: 8.5, color: GREY, align: 'center' });
+  // ── Contact details + blessing ───────────────────────────────────────────
+  doc.setLineWidth(0.2);
+  doc.setDrawColor(...GREY);
+  doc.line(M, H - 19.5, R, H - 19.5);
+  const contactY = H - 14.5;
+  CONTACTS.forEach((contact, index) => {
+    // Name (bold) and number side by side: the first contact at the left margin, the second ending at the right.
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    const nameWidth = doc.getTextWidth(contact.name);
+    doc.setFont('helvetica', 'normal');
+    const phoneWidth = doc.getTextWidth(contact.phone);
+    const startX = index === 0 ? M : R - (nameWidth + 3 + phoneWidth);
+    text(contact.name, startX, contactY, { size: 8.5, style: 'bold' });
+    text(contact.phone, startX + nameWidth + 3, contactY, { size: 8.5 });
+  });
+  text('Thank you for your seva. May Sri Krishna bless you.', W / 2, H - 9.5, { size: 8, color: GREY, align: 'center' });
 
   if (booking.status === 'cancelled') {
     // A cancelled booking can still be reprinted, but it is clearly marked as void.
@@ -207,41 +237,8 @@ export const receiptToDocument = (receipt) => {
   };
 };
 
-const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`);
-
-// Opens the receipt as a PDF in a new browser window (nothing is downloaded). The viewer there offers
-// print and save if the user wants them. With `print: true` the print dialog is raised automatically.
-// Must be called straight from a click handler so the browser does not treat the window as a popup.
+// Opens the receipt as a PDF in a new browser window (nothing is downloaded); see openPdfWindow.
+// Call it straight from a click handler. It waits for the optional background picture to load.
 export function openReceipt(booking, { print = false } = {}) {
-  const receiptWindow = window.open('', '_blank');
-
-  if (!receiptWindow) {
-    toast.error('Your browser blocked the receipt window. Allow pop-ups for this site and try again.');
-    return false;
-  }
-
-  try {
-    const url = URL.createObjectURL(buildReceipt(booking).output('blob'));
-    const title = escapeHtml(`Receipt ${booking.receiptNumber}`);
-
-    receiptWindow.document.open();
-    receiptWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
-<style>html,body{margin:0;height:100%;background:#475569}iframe{border:0;width:100%;height:100%}</style></head>
-<body><iframe id="receipt" src="${url}" title="${title}"></iframe>
-<script>${
-      print
-        ? "document.getElementById('receipt').addEventListener('load',function(){setTimeout(function(){try{this.contentWindow.focus();this.contentWindow.print();}catch(e){window.print();}}.bind(this),400);});"
-        : ''
-    }</script></body></html>`);
-    receiptWindow.document.close();
-
-    // The window keeps its own reference to the PDF; release ours after a while.
-    setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
-    return true;
-  } catch (error) {
-    receiptWindow.close();
-    toast.error('Could not generate the receipt PDF.');
-    console.error(error);
-    return false;
-  }
+  return openPdfWindow(async () => buildReceipt(booking, await loadReceiptBackground()), `Receipt ${booking.receiptNumber}`, { print });
 }

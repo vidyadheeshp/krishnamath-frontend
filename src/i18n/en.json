@@ -17,7 +17,8 @@
     "financePayments": "Payments",
     "financeExpenditures": "Expense statement",
     "receipts": "Annadana, donation & hundi",
-    "blockedDates": "Blocked dates"
+    "blockedDates": "Blocked dates",
+    "sevaList": "Priest's seva list"
   },
   "common": {
     "save": "Save",
@@ -414,5 +415,22 @@
     "saveFailed": "Could not save the change",
     "empty": "No dates are blocked for this year yet.",
     "searchPlaceholder": "Search date or reason…"
+  },
+  "sevaList": {
+    "title": "Priest's seva list",
+    "description": "The sevas to be performed today and tomorrow, with each devotee's name, gotra, nakshatra and raashi, ready to hand over to the priest as a PDF.",
+    "day": "Day",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "name": "Name",
+    "sevasBooked": "Sevas booked",
+    "bookings": "Bookings",
+    "sevasToPerform": "Sevas to be performed",
+    "sevaWiseCount": "Seva-wise count",
+    "openPdf": "Open PDF",
+    "empty": "No sevas are booked for this day.",
+    "blockedNote": "{{reason}}: bookings are closed for this day",
+    "searchPlaceholder": "Search name, gotra, nakshatra or seva…",
+    "loadFailed": "Could not load the seva list"
   }
 }

@@ -1,6 +1,7 @@
 import {
   BarChart3,
   CalendarOff,
+  ClipboardList,
   Banknote,
   HandCoins,
   CalendarCheck,
@@ -29,6 +30,7 @@ export const navigationSections = [
     items: [
       { key: 'nav.dashboard', path: '/', icon: LayoutDashboard, roles: [SUPER_ADMIN, ADMIN] },
       { key: 'nav.bookings', path: '/bookings', icon: CalendarCheck, roles: [SUPER_ADMIN, ADMIN] },
+      { key: 'nav.sevaList', path: '/seva-list', icon: ClipboardList, roles: [SUPER_ADMIN, ADMIN] },
       { key: 'nav.receipts', path: '/receipts', icon: HandCoins, roles: [SUPER_ADMIN, ADMIN] },
       { key: 'nav.expenditures', path: '/expenditures', icon: Receipt, roles: [SUPER_ADMIN, ADMIN] },
     ],

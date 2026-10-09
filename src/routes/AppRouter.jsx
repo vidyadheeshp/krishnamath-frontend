@@ -16,6 +16,7 @@ const FinanceOverviewPage = lazy(() => import('../pages/FinanceOverviewPage'));
 const FinancePaymentsPage = lazy(() => import('../pages/FinancePaymentsPage'));
 const MetadataPage = lazy(() => import('../pages/MetadataPage'));
 const ProfilePage = lazy(() => import('../pages/ProfilePage'));
+const SevaListPage = lazy(() => import('../pages/SevaListPage'));
 const ReceiptsPage = lazy(() => import('../pages/ReceiptsPage'));
 const ReportsPage = lazy(() => import('../pages/ReportsPage'));
 const SevasPage = lazy(() => import('../pages/SevasPage'));
@@ -97,6 +98,7 @@ export default function AppRouter() {
               </Suspense>
             }
           />
+          <Route path="/seva-list" element={guarded('/seva-list', <SevaListPage />)} />
           <Route path="/blocked-dates" element={guarded('/blocked-dates', <BlockedDatesPage />)} />
           <Route path="/receipts" element={guarded('/receipts', <ReceiptsPage />)} />
           <Route path="/expenditures" element={guarded('/expenditures', <ExpendituresPage />)} />
