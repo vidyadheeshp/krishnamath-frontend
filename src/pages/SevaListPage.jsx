@@ -7,6 +7,7 @@ import api from '../api/client';
 import DataTable from '../components/DataTable';
 import PageHeader from '../components/PageHeader';
 import StatCard from '../components/StatCard';
+import { masaName, panchangLimbs } from '../constants/panchang';
 import { openSevaListPdf } from '../utils/generateSevaList';
 import { localeName } from '../utils/format';
 
@@ -105,6 +106,20 @@ export default function SevaListPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-6 text-center shadow-card">
             <p className="text-sm font-medium uppercase tracking-wide text-slate-500">{t(`sevaList.${list.day}`)}</p>
             <h2 className="mt-1 text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{formatLong(list.date)}</h2>
+            {list.panchang ? (
+              <div className="mx-auto mt-4 max-w-3xl">
+                <p className="text-sm font-semibold text-slate-700">{masaName(list.panchang.masa, list.panchang.adhika, i18n.language)} {t('panchang.masa')}</p>
+                <dl className="mt-2 grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-slate-200 bg-slate-200 sm:grid-cols-5">
+                  {panchangLimbs(list.panchang, i18n.language).map((limb) => (
+                    <div key={limb.key} className="bg-white px-3 py-2">
+                      <dt className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{t(`panchang.${limb.key}`)}</dt>
+                      <dd className="mt-0.5 text-sm font-semibold text-ink">{limb.value}</dd>
+                      {limb.until ? <dd className="text-xs text-slate-500">{t('panchang.until', { time: limb.until })}</dd> : null}
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : null}
             {list.blockedReason ? (
               <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-rose-50 px-3 py-1 text-sm font-medium text-rose-700">
                 <Info className="h-4 w-4" aria-hidden="true" />

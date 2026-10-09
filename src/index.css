@@ -172,3 +172,52 @@ body {
   text-align: right;
   white-space: normal;
 }
+
+/* Hindu calendar (panchang) details inside each day of the booking calendar. */
+.fc .fc-pan {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 100%;
+  gap: 1px;
+  text-align: right;
+}
+
+.fc .fc-pan-number {
+  font-size: 0.875rem;
+}
+
+.fc .fc-pan-line {
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.fc .fc-pan-tithi {
+  font-weight: 600;
+  color: #475569;
+}
+
+.fc .fc-pan-nakshatra {
+  color: #94a3b8;
+}
+
+.fc .fc-pan-tag {
+  margin-top: 2px;
+  max-width: 100%;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: normal;
+}
+
+.fc .fc-pan-festival {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.fc .fc-pan-ekadashi {
+  background: #e0e7ff;
+  color: #3730a3;
+}

@@ -432,5 +432,14 @@
     "blockedNote": "{{reason}}: bookings are closed for this day",
     "searchPlaceholder": "Search name, gotra, nakshatra or seva…",
     "loadFailed": "Could not load the seva list"
+  },
+  "panchang": {
+    "masa": "masa",
+    "tithi": "Tithi",
+    "vara": "Vara",
+    "nakshatra": "Nakshatra",
+    "yoga": "Yoga",
+    "karana": "Karana",
+    "until": "till {{time}}"
   }
 }

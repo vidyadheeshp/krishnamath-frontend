@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 
+import { masaName, panchangLimbs } from '../constants/panchang';
 import { openPdfWindow } from './pdfWindow';
 
 // The standard PDF fonts cannot draw Kannada, so the priest's sheet is printed in English.
@@ -17,6 +18,8 @@ const COLUMNS = [
   { key: 'raashi', title: 'Raashi', width: 24 },
   { key: 'sevas', title: 'Sevas booked', width: 52 },
 ];
+
+const LIMB_LABELS = { tithi: 'TITHI', vara: 'VARA', nakshatra: 'NAKSHATRA', yoga: 'YOGA', karana: 'KARANA' };
 
 const longDate = (isoDate) =>
   new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${isoDate}T12:00:00`));
@@ -43,6 +46,35 @@ export function buildSevaListPdf(list) {
   text(dayLabel, W / 2, 40, { size: 10, color: GREY, align: 'center' });
 
   let y = 47;
+
+  // The day's panchanga: tithi, vara, nakshatra, yoga and karana (as at sunrise, with the time each ends).
+  if (list.panchang) {
+    const day = list.panchang;
+    text(`${masaName(day.masa, day.adhika, 'en')} Masa`, W / 2, y, { size: 9, style: 'bold', align: 'center' });
+    y += 3;
+    const cellWidth = tableWidth / 5;
+    doc.setDrawColor(...LIGHT);
+    doc.setLineWidth(0.3);
+    doc.rect(MARGIN, y, tableWidth, 15);
+    panchangLimbs(day, 'en').forEach((limb, index) => {
+      const x = MARGIN + index * cellWidth;
+      if (index > 0) doc.line(x, y, x, y + 15);
+      const centre = x + cellWidth / 2;
+      text(LIMB_LABELS[limb.key], centre, y + 4, { size: 7, style: 'bold', color: GREY, align: 'center' });
+
+      let size = 10;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(size);
+      while (size > 7 && doc.getTextWidth(limb.value) > cellWidth - 3) {
+        size -= 0.5;
+        doc.setFontSize(size);
+      }
+      text(limb.value, centre, y + 9, { size, style: 'bold', align: 'center' });
+      if (limb.until) text(`till ${limb.until}`, centre, y + 12.8, { size: 7.5, color: GREY, align: 'center' });
+    });
+    y += 19;
+  }
+
   if (list.blockedReason) {
     text(`${list.blockedReason} - bookings are closed for this day`, W / 2, y, { size: 9, color: GREY, align: 'center' });
     y += 5;
