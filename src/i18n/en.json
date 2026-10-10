@@ -165,7 +165,12 @@
     "cancelClosed": "Cancellation closed",
     "cancelClosedHint": "A booking can be cancelled only up to its seva date ({{date}}). That date has passed, so this booking is frozen.",
     "cancelDeadlineNote": "You can cancel this booking until the end of its seva date ({{date}}).",
-    "dateBlocked": "Bookings are closed on {{date}}: {{reason}}"
+    "dateBlocked": "Bookings are closed on {{date}}: {{reason}}",
+    "dayBookings": "{{count}} bookings",
+    "bookingsOn": "Bookings on {{date}}",
+    "searchDay": "Search name, mobile, receipt or seva…",
+    "noMatches": "No bookings match your search.",
+    "newOnDate": "New booking on this date"
   },
   "sevas": {
     "title": "Seva management",

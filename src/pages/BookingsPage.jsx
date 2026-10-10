@@ -15,6 +15,9 @@ import { formatCurrency, formatDate, localeName } from '../utils/format';
 import { openReceipt } from '../utils/generateReceipt';
 import { bookingSchema } from '../validations/authSchemas';
 
+// Calendar events with this id prefix stand for "all bookings of that date" instead of one booking.
+const DAY_EVENT_PREFIX = 'day:';
+
 export default function BookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [sevas, setSevas] = useState([]);
@@ -22,6 +25,8 @@ export default function BookingsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isUpiModalOpen, setIsUpiModalOpen] = useState(false);
   const [detailBooking, setDetailBooking] = useState(null);
+  const [dayListDate, setDayListDate] = useState(null); // the date whose bookings are listed in a modal
+  const [dayListSearch, setDayListSearch] = useState('');
   const [blockedDates, setBlockedDates] = useState({});
   const [cancelTarget, setCancelTarget] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
@@ -258,6 +263,12 @@ export default function BookingsPage() {
   };
 
   const handleEventClick = (bookingId) => {
+    if (bookingId.startsWith(DAY_EVENT_PREFIX)) {
+      setDayListSearch('');
+      setDayListDate(bookingId.slice(DAY_EVENT_PREFIX.length));
+      return;
+    }
+
     const found = bookings.find((b) => b.id === bookingId);
     if (found) setDetailBooking(found);
   };
@@ -350,7 +361,26 @@ export default function BookingsPage() {
     statusFilter === 'all' ? true : statusFilter === 'cancelled' ? row.status === 'cancelled' : row.status !== 'cancelled',
   );
 
-  const calendarEvents = bookings.map((booking) => {
+  // A date with one booking shows that booking; a date with several shows a single "N bookings" badge that
+  // opens the full list, so a busy day never makes the calendar cell grow.
+  const bookingsByDate = useMemo(() => {
+    const grouped = new Map();
+    bookings.forEach((booking) => grouped.set(booking.bookingDate, [...(grouped.get(booking.bookingDate) ?? []), booking]));
+    return grouped;
+  }, [bookings]);
+
+  const calendarEvents = [...bookingsByDate.entries()].map(([date, dayBookings]) => {
+    if (dayBookings.length > 1) {
+      return {
+        id: `${DAY_EVENT_PREFIX}${date}`,
+        title: t('bookings.dayBookings', { count: dayBookings.length }),
+        start: date,
+        allDay: true,
+        color: dayBookings.every((booking) => booking.status === 'cancelled') ? '#ad4c34' : '#4f46e5',
+      };
+    }
+
+    const [booking] = dayBookings;
     const sevaNames = getBookingSevas(booking).map((seva) => localeName(seva, lang));
 
     return {
@@ -360,6 +390,24 @@ export default function BookingsPage() {
       color: booking.status === 'cancelled' ? '#ad4c34' : '#4f6f52',
     };
   });
+
+  const dayListBookings = useMemo(() => {
+    if (!dayListDate) return [];
+    const needle = dayListSearch.trim().toLowerCase();
+
+    return (bookingsByDate.get(dayListDate) ?? [])
+      .filter((booking) => {
+        if (!needle) return true;
+        const haystack = [
+          booking.devotee?.name,
+          booking.devotee?.mobileNumber,
+          booking.receiptNumber,
+          ...getBookingSevas(booking).flatMap((seva) => [seva.name, seva.nameKn]),
+        ];
+        return haystack.some((value) => String(value ?? '').toLowerCase().includes(needle));
+      })
+      .sort((left, right) => String(left.bookingTime).localeCompare(String(right.bookingTime)) || left.receiptNumber.localeCompare(right.receiptNumber));
+  }, [bookingsByDate, dayListDate, dayListSearch]);
 
   return (
     <div className="space-y-6">
@@ -673,6 +721,71 @@ export default function BookingsPage() {
                 className="rounded-lg bg-moss px-4 py-3 text-sm font-semibold text-white transition hover:bg-ink"
               >
                 {t('bookings.upiPaymentDone')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* All bookings of one date (opened from the "N bookings" badge on the calendar) */}
+      {dayListDate ? (
+        <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-ink/45 px-4 py-8">
+          <div className="w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-6 shadow-card">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-brand">{t('bookings.dayBookings', { count: (bookingsByDate.get(dayListDate) ?? []).length })}</p>
+                <h2 className="mt-1 text-lg font-semibold text-ink">{t('bookings.bookingsOn', { date: formatDate(dayListDate) })}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDayListDate(null)}
+                className="shrink-0 rounded-xl border border-sandal px-3 py-2 text-sm font-semibold text-ink hover:bg-sandal/40"
+              >
+                ✕ {t('common.close')}
+              </button>
+            </div>
+
+            <input
+              type="search"
+              value={dayListSearch}
+              onChange={(event) => setDayListSearch(event.target.value)}
+              placeholder={t('bookings.searchDay')}
+              className="mt-4 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            />
+
+            <ul className="mt-3 max-h-[55vh] divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200">
+              {dayListBookings.length === 0 ? (
+                <li className="px-4 py-6 text-center text-sm text-slate-500">{t('bookings.noMatches')}</li>
+              ) : (
+                dayListBookings.map((booking) => (
+                  <li key={booking.id}>
+                    <button type="button" onClick={() => setDetailBooking(booking)} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50">
+                      <span className="w-12 shrink-0 text-sm font-semibold text-slate-600">{booking.bookingTime}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-ink">{booking.devotee?.name}</span>
+                        <span className="block truncate text-xs text-slate-500">
+                          {getBookingSevas(booking).map((seva) => localeName(seva, lang)).join(', ')} · {booking.receiptNumber}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-medium text-slate-700">{formatCurrency(booking.amountCollected)}</span>
+                      <StatusBadge value={booking.status} />
+                    </button>
+                  </li>
+                ))
+              )}
+            </ul>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  const date = dayListDate;
+                  setDayListDate(null);
+                  handleDateClick(date);
+                }}
+                className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+              >
+                {t('bookings.newOnDate')}
               </button>
             </div>
           </div>
