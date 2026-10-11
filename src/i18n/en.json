@@ -16,7 +16,7 @@
     "financeOverview": "Finance overview",
     "financePayments": "Payments",
     "financeExpenditures": "Expense statement",
-    "receipts": "Annadana, donation & hundi",
+    "receipts": "Annadana, donation, hundi & sthala kanike",
     "blockedDates": "Blocked dates",
     "sevaList": "Priest's seva list"
   },
@@ -170,7 +170,9 @@
     "bookingsOn": "Bookings on {{date}}",
     "searchDay": "Search name, mobile, receipt or seva…",
     "noMatches": "No bookings match your search.",
-    "newOnDate": "New booking on this date"
+    "newOnDate": "New booking on this date",
+    "cancelCashOnly": "Cash only",
+    "cancelCashOnlyHint": "Only cash bookings can be cancelled. This booking was paid by {{mode}}, so it cannot be cancelled here."
   },
   "sevas": {
     "title": "Seva management",
@@ -315,7 +317,9 @@
     "entriesLower": "entries",
     "exportExpenditureJson": "Expenditure JSON (Tally)",
     "debitsByCategory": "Debits by category",
-    "monthwiseDebits": "Month-wise expenditure by head"
+    "monthwiseDebits": "Month-wise expenditure by head",
+    "exportCsv": "Receipts CSV",
+    "exportExpenditureCsv": "Expenditure CSV"
   },
   "users": {
     "title": "Users & roles",
@@ -341,10 +345,11 @@
     "religious-seva": "Religious Seva",
     "annadana-seva": "Annadana Seva",
     "donation": "Donation",
-    "hundi-collection": "Hundi Collection"
+    "hundi-collection": "Hundi Collection",
+    "sthala-kanike": "Sthala Kanike"
   },
   "receipts": {
-    "title": "Annadana, donation & hundi",
+    "title": "Annadana, donation, hundi & sthala kanike",
     "description": "Record payments received other than seva bookings. Seva bookings are accounted under Religious Seva automatically.",
     "category": "Category",
     "allCategories": "All categories",

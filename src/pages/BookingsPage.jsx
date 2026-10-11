@@ -262,6 +262,12 @@ export default function BookingsPage() {
     }
   };
 
+  // Why a booking's cancel button is disabled.
+  const cancelBlockedHint = (booking) =>
+    booking.cancellationBlock === 'payment-mode'
+      ? t('bookings.cancelCashOnlyHint', { mode: booking.paymentMode })
+      : t('bookings.cancelClosedHint', { date: formatDate(booking.bookingDate) });
+
   const handleEventClick = (bookingId) => {
     if (bookingId.startsWith(DAY_EVENT_PREFIX)) {
       setDayListSearch('');
@@ -323,13 +329,13 @@ export default function BookingsPage() {
                 {t('bookings.cancelBooking')}
               </button>
             ) : booking.status !== 'cancelled' ? (
-              // The seva date has passed: the booking is frozen.
+              // Not cancellable: either not a cash booking, or the seva date has passed (the booking is frozen).
               <span
                 className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-400"
-                title={t('bookings.cancelClosedHint', { date: formatDate(booking.bookingDate) })}
+                title={cancelBlockedHint(booking)}
               >
                 <Ban className="h-3.5 w-3.5" aria-hidden="true" />
-                {t('bookings.cancelClosed')}
+                {booking.cancellationBlock === 'payment-mode' ? t('bookings.cancelCashOnly') : t('bookings.cancelClosed')}
               </span>
             ) : null}
           </div>
@@ -897,13 +903,23 @@ export default function BookingsPage() {
                     <Ban className="h-4 w-4" aria-hidden="true" />
                     {t('bookings.cancelBooking')}
                   </button>
+                ) : detailBooking.status !== 'cancelled' ? (
+                  <button
+                    type="button"
+                    disabled
+                    title={cancelBlockedHint(detailBooking)}
+                    className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-400"
+                  >
+                    <Ban className="h-4 w-4" aria-hidden="true" />
+                    {t('bookings.cancelBooking')}
+                  </button>
                 ) : null}
               </div>
             </div>
             {detailBooking.status !== 'cancelled' && !detailBooking.cancellable ? (
               <p className="mt-3 flex items-center gap-2 text-xs text-slate-500" role="note">
                 <Ban className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                {t('bookings.cancelClosedHint', { date: formatDate(detailBooking.bookingDate) })}
+                {cancelBlockedHint(detailBooking)}
               </p>
             ) : null}
           </div>

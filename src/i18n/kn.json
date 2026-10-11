@@ -16,7 +16,7 @@
     "financeOverview": "ಹಣಕಾಸು ಅವಲೋಕನ",
     "financePayments": "ಪಾವತಿಗಳು",
     "financeExpenditures": "ವೆಚ್ಚ ಹೇಳಿಕೆ",
-    "receipts": "ಅನ್ನದಾನ, ದೇಣಿಗೆ ಮತ್ತು ಹುಂಡಿ",
+    "receipts": "ಅನ್ನದಾನ, ದೇಣಿಗೆ, ಹುಂಡಿ ಮತ್ತು ಸ್ಥಳ ಕಾಣಿಕೆ",
     "blockedDates": "ನಿರ್ಬಂಧಿತ ದಿನಾಂಕಗಳು",
     "sevaList": "ಅರ್ಚಕರ ಸೇವಾ ಪಟ್ಟಿ"
   },
@@ -170,7 +170,9 @@
     "bookingsOn": "{{date}} ರ ಬುಕಿಂಗ್‌ಗಳು",
     "searchDay": "ಹೆಸರು, ಮೊಬೈಲ್, ರಸೀದಿ ಅಥವಾ ಸೇವೆ ಹುಡುಕಿ…",
     "noMatches": "ನಿಮ್ಮ ಹುಡುಕಾಟಕ್ಕೆ ಹೊಂದುವ ಬುಕಿಂಗ್ ಇಲ್ಲ.",
-    "newOnDate": "ಈ ದಿನಾಂಕಕ್ಕೆ ಹೊಸ ಬುಕಿಂಗ್"
+    "newOnDate": "ಈ ದಿನಾಂಕಕ್ಕೆ ಹೊಸ ಬುಕಿಂಗ್",
+    "cancelCashOnly": "ನಗದು ಮಾತ್ರ",
+    "cancelCashOnlyHint": "ನಗದು ಬುಕಿಂಗ್‌ಗಳನ್ನು ಮಾತ್ರ ರದ್ದುಮಾಡಬಹುದು. ಈ ಬುಕಿಂಗ್ ಅನ್ನು {{mode}} ಮೂಲಕ ಪಾವತಿಸಲಾಗಿದೆ, ಆದ್ದರಿಂದ ಇಲ್ಲಿ ರದ್ದುಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ."
   },
   "sevas": {
     "title": "ಸೇವಾ ನಿರ್ವಹಣೆ",
@@ -315,7 +317,9 @@
     "entriesLower": "ನಮೂದುಗಳು",
     "exportExpenditureJson": "ವೆಚ್ಚ JSON (Tally)",
     "debitsByCategory": "ವರ್ಗದ ಪ್ರಕಾರ ಖರ್ಚು",
-    "monthwiseDebits": "ತಿಂಗಳವಾರು ವೆಚ್ಚ (ವರ್ಗದ ಪ್ರಕಾರ)"
+    "monthwiseDebits": "ತಿಂಗಳವಾರು ವೆಚ್ಚ (ವರ್ಗದ ಪ್ರಕಾರ)",
+    "exportCsv": "ರಸೀದಿ CSV",
+    "exportExpenditureCsv": "ವೆಚ್ಚ CSV"
   },
   "users": {
     "title": "ಬಳಕೆದಾರರು ಮತ್ತು ಪಾತ್ರಗಳು",
@@ -341,10 +345,11 @@
     "religious-seva": "ಧಾರ್ಮಿಕ ಸೇವೆ",
     "annadana-seva": "ಅನ್ನದಾನ ಸೇವೆ",
     "donation": "ದೇಣಿಗೆ",
-    "hundi-collection": "ಹುಂಡಿ ಸಂಗ್ರಹ"
+    "hundi-collection": "ಹುಂಡಿ ಸಂಗ್ರಹ",
+    "sthala-kanike": "ಸ್ಥಳ ಕಾಣಿಕೆ"
   },
   "receipts": {
-    "title": "ಅನ್ನದಾನ, ದೇಣಿಗೆ ಮತ್ತು ಹುಂಡಿ",
+    "title": "ಅನ್ನದಾನ, ದೇಣಿಗೆ, ಹುಂಡಿ ಮತ್ತು ಸ್ಥಳ ಕಾಣಿಕೆ",
     "description": "ಸೇವಾ ಬುಕಿಂಗ್ ಹೊರತಾದ ಪಾವತಿಗಳನ್ನು ದಾಖಲಿಸಿ. ಸೇವಾ ಬುಕಿಂಗ್‌ಗಳು ತಾನಾಗಿಯೇ ಧಾರ್ಮಿಕ ಸೇವೆಯಡಿ ಲೆಕ್ಕವಾಗುತ್ತವೆ.",
     "category": "ವರ್ಗ",
     "allCategories": "ಎಲ್ಲಾ ವರ್ಗಗಳು",
