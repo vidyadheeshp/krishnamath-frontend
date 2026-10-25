@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 
 import { formatCompactCurrency, formatCurrency, localeName } from '../utils/format';
 
-// Bookings (green), expenditure (red), net (indigo) - matches the finance dashboard.
+// Bookings (green), expenses (red), net (indigo) - matches the finance dashboard.
 const REVENUE_COLORS = ['#059669', '#e11d48', '#4f46e5'];
 
 const PIE_COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316'];

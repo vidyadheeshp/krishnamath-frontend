@@ -89,7 +89,11 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="hidden lg:block">
-            <Logo tone="dark" subtitle={`${t('nav.tagline', { lng: 'en' })} · ${t('nav.tagline', { lng: 'kn' })}`} />
+            <Logo
+              tone="dark"
+              title={`${t('nav.appName', { lng: 'en' })} · ${t('nav.appName', { lng: 'kn' })}`}
+              subtitle={`${t('nav.tagline', { lng: 'en' })} · ${t('nav.tagline', { lng: 'kn' })}`}
+            />
           </div>
           <h2 className="mt-8 text-2xl font-semibold tracking-tight text-ink lg:mt-10"><Bilingual text={text('login.title')} /></h2>
 

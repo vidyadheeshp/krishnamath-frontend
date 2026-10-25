@@ -1,20 +1,154 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" role="img" aria-label="Sri Krishnamath &amp; Sabhabhavan, Belagavi">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 72" role="img" aria-label="Vasuprada">
+  <svg x="0" y="4" width="64" height="64" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#3730a3"/></linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#f59e0b"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b3a8f"/>
+      <stop offset="0.55" stop-color="#22206a"/>
+      <stop offset="1" stop-color="#0f0d33"/>
+    </linearGradient>
+    <radialGradient id="aura" cx="0.5" cy="0.42" r="0.5">
+      <stop offset="0" stop-color="#ffd978" stop-opacity="0.65"/>
+      <stop offset="0.55" stop-color="#ffb938" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#ffb938" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6c2"/>
+      <stop offset="0.35" stop-color="#f8cd52"/>
+      <stop offset="0.7" stop-color="#d79a1b"/>
+      <stop offset="1" stop-color="#8f5d0c"/>
+    </linearGradient>
+    <linearGradient id="goldH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8f5d0c"/>
+      <stop offset="0.25" stop-color="#ffe58f"/>
+      <stop offset="0.5" stop-color="#e0a622"/>
+      <stop offset="0.75" stop-color="#fff0b0"/>
+      <stop offset="1" stop-color="#9a6410"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0.1" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#4b5f9a"/>
+      <stop offset="0.35" stop-color="#202a56"/>
+      <stop offset="1" stop-color="#080b22"/>
+    </linearGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff0a0"/>
+      <stop offset="0.5" stop-color="#f5b82e"/>
+      <stop offset="1" stop-color="#c8830f"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe8a0"/>
+      <stop offset="0.5" stop-color="#c88a18"/>
+      <stop offset="1" stop-color="#ffe08a"/>
+    </linearGradient>
+    <radialGradient id="ruby" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ffb3b3"/>
+      <stop offset="0.45" stop-color="#e0243b"/>
+      <stop offset="1" stop-color="#7a0818"/>
+    </radialGradient>
+    <clipPath id="badge"><rect width="512" height="512" rx="112"/></clipPath>
   </defs>
-  <g>
-    <rect width="64" height="64" rx="16" fill="url(#bg)"/>
-    <path d="M32 4.6c1.5 1.7 2.3 3 2.3 4.2a2.3 2.3 0 0 1-4.6 0c0-1.2.8-2.5 2.3-4.2z" fill="url(#gold)"/>
-    <rect x="31.1" y="10.6" width="1.8" height="3" rx=".9" fill="url(#gold)"/>
-    <path d="M26.5 14.5h11l2.2 7.6H24.3z" fill="#fff"/>
-    <path d="M22.4 23.6h19.2l3.3 7.8H19.1z" fill="#fff" fill-opacity=".92"/>
-    <path d="M17.2 32.9h29.6l4.2 8.3H13z" fill="#fff" fill-opacity=".84"/>
-    <rect x="10" y="42.6" width="44" height="9" rx="2.2" fill="#fff"/>
-    <rect x="10" y="42.6" width="44" height="1.8" fill="url(#gold)"/>
-    <path d="M28 51.6v-4.4a4 4 0 0 1 8 0v4.4z" fill="#3730a3"/>
-    <path d="M20 56.4c3.4-2.2 7.6-2.2 12 0 4.4-2.2 8.6-2.2 12 0" fill="none" stroke="#fde68a" stroke-width="1.6" stroke-linecap="round"/>
+
+  <g clip-path="url(#badge)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <rect width="512" height="512" fill="url(#aura)"/>
+
+    <!-- prabhavali: the arch behind the deity -->
+    <path d="M100 452V262C100 138 172 62 256 62s156 76 156 200v190" fill="none" stroke="url(#gold)" stroke-width="13" stroke-linecap="round"/>
+    <path d="M122 452V264C122 150 184 86 256 86s134 64 134 178v188" fill="none" stroke="url(#goldH)" stroke-width="3.5" opacity="0.8"/>
+    <g fill="url(#gold)">
+      <circle cx="256" cy="62" r="9"/>
+      <circle cx="152" cy="118" r="5.5"/><circle cx="360" cy="118" r="5.5"/>
+      <circle cx="112" cy="196" r="5"/><circle cx="400" cy="196" r="5"/>
+    </g>
+
+    <!-- churning rod (right hand) -->
+    <rect x="190" y="146" width="9" height="284" rx="4.5" fill="url(#goldH)"/>
+    <circle cx="194.5" cy="144" r="9" fill="url(#gold)"/>
+
+    <!-- body -->
+    <path d="M246 214h20v22h-20z" fill="url(#skin)"/>
+    <path d="M214 240c0-12 24-14 42-14s42 2 42 14c9 26 6 62-2 88-10 14-70 14-80 0-8-26-11-62-2-88z" fill="url(#skin)"/>
+
+    <!-- arms -->
+    <path d="M220 248c-24 14-30 42-24 66" fill="none" stroke="url(#skin)" stroke-width="22" stroke-linecap="round"/>
+    <path d="M292 248c24 14 30 42 24 62" fill="none" stroke="url(#skin)" stroke-width="22" stroke-linecap="round"/>
+    <circle cx="195" cy="318" r="13" fill="url(#skin)"/>
+    <circle cx="317" cy="314" r="13" fill="url(#skin)"/>
+    <!-- rod passes in front of the closed fist -->
+    <rect x="190" y="300" width="9" height="40" rx="4.5" fill="url(#goldH)"/>
+    <!-- bracelets and armlets -->
+    <g fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round">
+      <path d="M185 304c6 5 15 5 21 0"/><path d="M307 300c6 5 15 5 21 0"/>
+      <path d="M205 252c-6 5-10 11-12 17"/><path d="M307 252c6 5 10 11 12 17"/>
+    </g>
+    <!-- rope (left hand) -->
+    <path d="M322 326c10 20 6 44-10 52-18 8-30-8-20-22 8-11 24-6 20 8" fill="none" stroke="#f3d28a" stroke-width="7" stroke-linecap="round"/>
+    <path d="M322 326c10 20 6 44-10 52-18 8-30-8-20-22 8-11 24-6 20 8" fill="none" stroke="#8a5a14" stroke-width="2.2" stroke-dasharray="3 5" stroke-linecap="round"/>
+    <path d="M324 330l10 30" stroke="#f3d28a" stroke-width="5" stroke-linecap="round"/><circle cx="335" cy="364" r="5" fill="url(#gold)"/>
+
+    <!-- necklaces and pendant -->
+    <path d="M226 238c10 24 50 24 60 0" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+    <path d="M221 250c12 36 58 36 70 0" fill="none" stroke="#fff3c4" stroke-width="5" stroke-dasharray="0.5 7" stroke-linecap="round"/>
+    <path d="M232 262c8 24 40 24 48 0" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="256" cy="292" r="9" fill="url(#gold)"/><circle cx="256" cy="292" r="5" fill="url(#ruby)"/>
+
+    <!-- waist band and pitambara (silk cloth) -->
+    <path d="M215 326c14 14 68 14 82 0l-2 18c-14 14-64 14-78 0z" fill="url(#gold)"/>
+    <circle cx="256" cy="338" r="7" fill="url(#ruby)"/>
+    <path d="M216 342c14 12 66 12 80 0l24 70c-22 14-106 14-128 0z" fill="url(#cloth)"/>
+    <path d="M238 352l-12 60M256 354v62M274 352l12 60" stroke="#b9770e" stroke-width="2.4" stroke-linecap="round" opacity="0.55"/>
+    <path d="M192 412c22 14 106 14 128 0" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linecap="round"/>
+
+    <!-- feet and anklets -->
+    <ellipse cx="236" cy="428" rx="15" ry="7" fill="url(#skin)"/><ellipse cx="276" cy="428" rx="15" ry="7" fill="url(#skin)"/>
+    <ellipse cx="236" cy="418" rx="12" ry="3.5" fill="none" stroke="url(#gold)" stroke-width="3"/>
+    <ellipse cx="276" cy="418" rx="12" ry="3.5" fill="none" stroke="url(#gold)" stroke-width="3"/>
+
+    <!-- head, ear ornaments, face -->
+    <circle cx="221" cy="196" r="6.5" fill="url(#gold)"/><circle cx="291" cy="196" r="6.5" fill="url(#gold)"/>
+    <circle cx="221" cy="208" r="3.5" fill="url(#ruby)"/><circle cx="291" cy="208" r="3.5" fill="url(#ruby)"/>
+    <ellipse cx="256" cy="184" rx="32" ry="36" fill="url(#skin)"/>
+    <path d="M247 158c3 8 15 8 18 0" fill="none" stroke="url(#gold)" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M256 160v13" stroke="#ff5a5a" stroke-width="3" stroke-linecap="round"/>
+    <path d="M238 183c4-4 9-4 13 0M261 183c4-4 9-4 13 0" fill="none" stroke="#f6ead0" stroke-width="2.6" stroke-linecap="round"/>
+    <path d="M249 204c4 4 10 4 14 0" fill="none" stroke="#e9b45e" stroke-width="2.6" stroke-linecap="round"/>
+
+    <!-- kireeta (crown) -->
+    <path d="M220 156l5-26 12 9 7-24 12-22 12 22 7 24 12-9 5 26z" fill="url(#goldH)"/>
+    <path d="M220 156h72v9c-18 6-54 6-72 0z" fill="url(#gold)"/>
+    <circle cx="256" cy="140" r="7" fill="url(#ruby)"/>
+    <circle cx="256" cy="94" r="5" fill="url(#gold)"/>
+    <g fill="#fff3c4"><circle cx="233" cy="158" r="2.6"/><circle cx="245" cy="161" r="2.6"/><circle cx="256" cy="162" r="2.6"/><circle cx="267" cy="161" r="2.6"/><circle cx="279" cy="158" r="2.6"/></g>
+
+    <!-- peacock feather -->
+    <path d="M276 126c18-6 30-24 28-50" fill="none" stroke="#2f9e6f" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="304" cy="68" rx="11" ry="17" transform="rotate(14 304 68)" fill="#1f8a63"/>
+    <ellipse cx="304" cy="68" rx="7" ry="12" transform="rotate(14 304 68)" fill="#2b5fd0"/>
+    <ellipse cx="304" cy="67" rx="3.4" ry="6.5" transform="rotate(14 304 67)" fill="#0b1e5b"/>
+    <ellipse cx="302.5" cy="62" rx="1.6" ry="3" fill="#8fe3ff" opacity="0.8"/>
+
+    <!-- lotus pedestal -->
+    <path d="M132 440q15-30 30 0q15-30 30 0q15-30 30 0q15-30 30 0q15-30 30 0q15-30 30 0q15-30 30 0q15-30 30 0z" fill="url(#gold)" stroke="#8f5d0c" stroke-width="1.5"/>
+    <rect x="126" y="438" width="260" height="16" rx="8" fill="url(#goldH)"/>
+    <rect x="144" y="452" width="224" height="14" rx="7" fill="url(#gold)"/>
+
+    <!-- polish on the deity -->
+    <ellipse cx="243" cy="170" rx="9" ry="14" transform="rotate(18 243 170)" fill="#fff" opacity="0.22"/>
+    <ellipse cx="236" cy="262" rx="9" ry="22" transform="rotate(14 236 262)" fill="#fff" opacity="0.14"/>
+    <ellipse cx="232" cy="378" rx="5" ry="26" transform="rotate(8 232 378)" fill="#fff" opacity="0.28"/>
+
+    <!-- shine: soft glass reflection and sparkles -->
+    <path d="M0 0H512V196C400 238 124 238 0 190Z" fill="url(#gloss)"/>
+    <g fill="#fff">
+      <path d="M404 112q2 16 16 18-14 2-16 18-2-16-16-18 14-2 16-18z"/>
+      <path d="M108 196q1.5 10 10 11.5-8.5 1.5-10 11.5-1.5-10-10-11.5 8.5-1.5 10-11.5z" opacity="0.85"/>
+    </g>
   </g>
-  <text x="80" y="35" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="29" font-weight="700" letter-spacing="-0.5" fill="#0f172a">Sri Krishnamath</text>
-  <text x="81" y="52" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="10.5" font-weight="600" letter-spacing="2.4" fill="#6366f1">&amp; SABHABHAVAN, BELAGAVI</text>
+  <rect x="3" y="3" width="506" height="506" rx="109" fill="none" stroke="url(#rim)" stroke-width="6"/>
+</svg>
+  <text x="78" y="36" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="26" font-weight="700" fill="#0f172a">Vasuprada</text>
+  <text x="78" y="56" font-family="Inter, 'Segoe UI', system-ui, sans-serif" font-size="13" font-weight="500" fill="#64748b">Sri Krishnamath &amp; Sabhabhavan, Belagavi</text>
 </svg>

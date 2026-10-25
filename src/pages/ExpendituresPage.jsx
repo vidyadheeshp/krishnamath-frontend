@@ -32,7 +32,7 @@ export default function ExpendituresPage() {
       const response = await api.get('/expenditures');
       setExpenditures(response.data.data);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to load expenditures');
+      toast.error(error.response?.data?.message || 'Failed to load expenses');
     }
   };
 
@@ -108,10 +108,10 @@ export default function ExpendituresPage() {
     if (!window.confirm(`Delete "${expenditure.expenseTitle}"? This cannot be undone.`)) return;
     try {
       await api.delete(`/expenditures/${expenditure.id}`);
-      toast.success('Expenditure deleted');
+      toast.success('Expense deleted');
       loadExpenditures();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete expenditure');
+      toast.error(error.response?.data?.message || 'Failed to delete expense');
     }
   };
 
@@ -120,17 +120,17 @@ export default function ExpendituresPage() {
     try {
       if (editingId) {
         await api.put(`/expenditures/${editingId}`, form);
-        toast.success('Expenditure updated');
+        toast.success('Expense updated');
       } else {
         await api.post('/expenditures', form);
-        toast.success('Expenditure recorded');
+        toast.success('Expense recorded');
       }
       setIsModalOpen(false);
       setEditingId(null);
       setForm(makeInitialForm());
       loadExpenditures();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to save expenditure');
+      toast.error(error.response?.data?.message || 'Failed to save expense');
     }
   };
 

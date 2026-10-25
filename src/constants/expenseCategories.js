@@ -1,4 +1,4 @@
-// Expenditure heads. The stored value is the English label (it is also the Tally "particulars").
+// Expense heads. The stored value is the English label (it is also the Tally "particulars").
 export const EXPENSE_CATEGORIES = ['Maintenance', 'Salaries', 'Daily Expenses', 'Dakshine and Sambhavane', 'Donation Paid'];
 
 const KEYS = {

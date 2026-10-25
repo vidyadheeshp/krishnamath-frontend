@@ -33,7 +33,7 @@ function SidebarContent({ onNavigate }) {
   return (
     <div className="flex h-full flex-col bg-slate-900 text-slate-300">
       <div className="shrink-0 px-5 py-5">
-        <Logo subtitle={t('nav.tagline')} />
+        <Logo subtitle={t('login.suite')} />
       </div>
 
       <nav className="sidebar-scroll flex-1 space-y-6 overflow-y-auto px-3 pb-6 pt-2" aria-label="Main">

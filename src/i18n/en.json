@@ -4,7 +4,7 @@
     "metadata": "Metadata",
     "sevas": "Sevas",
     "bookings": "Bookings",
-    "expenditures": "Expenditures",
+    "expenditures": "Expenses",
     "reports": "Reports",
     "signOut": "Sign out",
     "signedInAs": "Signed in as",
@@ -18,7 +18,8 @@
     "financeExpenditures": "Expense statement",
     "receipts": "Annadana, donation, hundi & sthala kanike",
     "blockedDates": "Blocked dates",
-    "sevaList": "Priest's seva list"
+    "sevaList": "Priest's seva list",
+    "appName": "Vasuprada"
   },
   "common": {
     "save": "Save",
@@ -68,7 +69,7 @@
   "login": {
     "suite": "Sri Krishnamath & Sabhabhavan, Belagavi",
     "headline": "Temple seva bookings and finance, in one secure portal.",
-    "subline": "Manage bookings and receipts, track collections and expenditure, and review month-wise financial performance.",
+    "subline": "Manage bookings and receipts, track collections and expenses, and review month-wise financial performance.",
     "email": "Email",
     "password": "Password",
     "signIn": "Sign in",
@@ -90,14 +91,14 @@
     "totalDevoteesVisited": "Total devotees visited",
     "dailyCollection": "Daily collection",
     "monthlyCollection": "Monthly collection",
-    "totalExpenditures": "Total expenditures",
+    "totalExpenditures": "Total expenses",
     "sevasPerformed": "Sevas performed",
     "upcomingEvents": "Upcoming events",
     "recentNotifications": "Recent notifications",
     "popularSevas": "Popular sevas",
     "popularSevasSubtitle": "A quick read on booking demand.",
     "revenueAndSpending": "Revenue and spending",
-    "revenueSubtitle": "Monthly financial pulse across bookings and expenditures.",
+    "revenueSubtitle": "Monthly financial pulse across bookings and expenses.",
     "bookingsLabel": "bookings"
   },
   "bookings": {
@@ -195,18 +196,18 @@
     "sevasCount": "{{from}}–{{to}} of {{total}} sevas"
   },
   "expenditures": {
-    "title": "Expenditure management",
+    "title": "Expense management",
     "description": "Track outgoing temple expenses, classify spending, and compare operational outflow against booking revenue.",
-    "allExpenditures": "All expenditures",
-    "addExpenditure": "Add expenditure",
-    "editExpenditure": "Edit expenditure",
+    "allExpenditures": "All expenses",
+    "addExpenditure": "Add expense",
+    "editExpenditure": "Edit expense",
     "expenseTitle": "Expense title",
     "expense": "Expense",
     "vendor": "Vendor",
     "vendorDetails": "Vendor details",
-    "saveExpenditure": "Save expenditure",
+    "saveExpenditure": "Save expense",
     "saveChanges": "Save changes",
-    "emptyText": "No expenditures have been entered yet.",
+    "emptyText": "No expenses have been entered yet.",
     "searchPlaceholder": "Search title, category, vendor, date, amount…"
   },
   "reports": {
@@ -257,11 +258,11 @@
   },
   "roles": {
     "super-admin": "Super admin",
-    "super-adminDesc": "Full access: configuration, bookings, expenditure, finance and user management.",
+    "super-adminDesc": "Full access: configuration, bookings, expenses, finance and user management.",
     "admin": "Admin",
-    "adminDesc": "Configures sevas and metadata, creates bookings and records expenditure.",
+    "adminDesc": "Configures sevas and metadata, creates bookings and records expenses.",
     "finance": "Accounts & finance head",
-    "financeDesc": "Read-only access to payments, expenditure, reports and the finance dashboard."
+    "financeDesc": "Read-only access to payments, expenses, reports and the finance dashboard."
   },
   "finance": {
     "year": "Year",
@@ -273,7 +274,7 @@
     "credits": "Credits",
     "creditsHint": "All payments received",
     "debits": "Debits",
-    "debitsHint": "Recorded expenditure",
+    "debitsHint": "Recorded expense",
     "profit": "Profit",
     "margin": "Margin",
     "bookingsCount": "Bookings",
@@ -299,13 +300,13 @@
     "bookingsLower": "bookings",
     "ofTotal": "of total",
     "expendituresTitle": "Expense statement",
-    "expendituresDescription": "Expenditure for the selected period, grouped by category.",
+    "expendituresDescription": "Expenses for the selected period, grouped by category.",
     "expenseTitle": "Expense",
     "vendor": "Vendor",
-    "totalExpenditure": "Total expenditure",
+    "totalExpenditure": "Total expense",
     "expenseEntriesLabel": "Entries",
     "topCategory": "Top head",
-    "noExpenditures": "No expenditure recorded in this period.",
+    "noExpenditures": "No expense recorded in this period.",
     "exportJson": "Receipts JSON (Tally)",
     "exportEmpty": "No receipts in this period to export.",
     "exportDone": "{{count}} entries exported",
@@ -315,11 +316,11 @@
     "cancelledEntries": "Cancelled receipts",
     "particulars": "Particulars",
     "entriesLower": "entries",
-    "exportExpenditureJson": "Expenditure JSON (Tally)",
+    "exportExpenditureJson": "Expense JSON (Tally)",
     "debitsByCategory": "Debits by category",
-    "monthwiseDebits": "Month-wise expenditure by head",
+    "monthwiseDebits": "Month-wise expense by head",
     "exportCsv": "Receipts CSV",
-    "exportExpenditureCsv": "Expenditure CSV"
+    "exportExpenditureCsv": "Expense CSV"
   },
   "users": {
     "title": "Users & roles",

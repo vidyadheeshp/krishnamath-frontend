@@ -31,7 +31,7 @@ const download = (content, type, filename) => {
   URL.revokeObjectURL(url);
 };
 
-// Downloads the receipts (or expenditure) of the selected period as a JSON or CSV file for Tally / audit records.
+// Downloads the receipts (or expenses) of the selected period as a JSON or CSV file for Tally / audit records.
 export default function TallyExportButton({ year, month, category, kind = 'receipts' }) {
   const { t } = useTranslation();
   const [busyFormat, setBusyFormat] = useState(null);
@@ -51,7 +51,7 @@ export default function TallyExportButton({ year, month, category, kind = 'recei
         return;
       }
 
-      const name = `krishnamath-${isExpenditure ? 'expenditure' : 'receipts'}-${year}${month ? `-${String(month).padStart(2, '0')}` : ''}${category ? `-${category}` : ''}`;
+      const name = `krishnamath-${isExpenditure ? 'expense' : 'receipts'}-${year}${month ? `-${String(month).padStart(2, '0')}` : ''}${category ? `-${category}` : ''}`;
 
       if (format === 'csv') {
         download(toCsv(entries), 'text/csv;charset=utf-8', `${name}.csv`);

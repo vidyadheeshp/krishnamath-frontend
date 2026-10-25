@@ -234,7 +234,7 @@ function downloadPDF({ periodLabel, activePeriod, filteredBookings, totalCollect
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...PDF_C.muted);
-  doc.text('Sri Krishnamath & Sabhabhavan, Belagavi — Temple Management System', W / 2, H - 3, { align: 'center' });
+  doc.text('Sri Krishnamath & Sabhabhavan, Belagavi — Vasuprada', W / 2, H - 3, { align: 'center' });
 
   doc.save(`krishnamath-${activePeriod}-report.pdf`);
 }
